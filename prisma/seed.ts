@@ -1,4 +1,4 @@
-import { PrismaClient, ProductCategory } from '@prisma/client'
+import { PrismaClient, ProductCategory, ReceivingCardType } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -46,10 +46,19 @@ async function main() {
     data: {
       productId: ledTile1.id,
       pixelPitchMm: 2.5,
-      resolutionW: 192,
-      resolutionH: 192,
+      physicalWidthMm: 500,
+      physicalHeightMm: 500,
+      pixelWidth: 192,
+      pixelHeight: 192,
+      weightKg: 8.5,
+      maxPowerW: 120,
+      avgPowerW: 100,
+      receivingCardType: ReceivingCardType.NOVASTAR,
       brightnessNits: 5000,
       refreshRateHz: 3840,
+      scanRate: 16,
+      buyPrice: 450.00,
+      sellPrice: 650.00,
     },
   })
 
@@ -75,10 +84,57 @@ async function main() {
     data: {
       productId: ledTile2.id,
       pixelPitchMm: 3.0,
-      resolutionW: 160,
-      resolutionH: 160,
+      physicalWidthMm: 500,
+      physicalHeightMm: 500,
+      pixelWidth: 160,
+      pixelHeight: 160,
+      weightKg: 8.0,
+      maxPowerW: 100,
+      avgPowerW: 85,
+      receivingCardType: ReceivingCardType.NOVASTAR,
       brightnessNits: 4500,
       refreshRateHz: 3840,
+      scanRate: 16,
+      buyPrice: 380.00,
+      sellPrice: 550.00,
+    },
+  })
+
+  const ledTile3 = await prisma.product.create({
+    data: {
+      name: 'P4 LED Tile',
+      category: ProductCategory.LED_TILE,
+      manufacturer: 'Brompton',
+      modelNumber: 'BR-P4-500x500',
+      widthMm: 500,
+      heightMm: 500,
+      depthMm: 85,
+      weightKg: 9.0,
+      powerW: 110,
+      voltageMin: 110,
+      voltageMax: 240,
+      unitCost: 320.00,
+      unitPrice: 480.00,
+    },
+  })
+
+  await prisma.lEDTileSpec.create({
+    data: {
+      productId: ledTile3.id,
+      pixelPitchMm: 4.0,
+      physicalWidthMm: 500,
+      physicalHeightMm: 500,
+      pixelWidth: 120,
+      pixelHeight: 120,
+      weightKg: 9.0,
+      maxPowerW: 110,
+      avgPowerW: 90,
+      receivingCardType: ReceivingCardType.BROMPTON,
+      brightnessNits: 4000,
+      refreshRateHz: 3840,
+      scanRate: 16,
+      buyPrice: 320.00,
+      sellPrice: 480.00,
     },
   })
 
@@ -105,9 +161,9 @@ async function main() {
     data: {
       productId: ledProcessor.id,
       inputs: 4,
-      outputs: 8,
-      maxResW: 7680,
-      maxResH: 4320,
+      outputs: 4,
+      maxResW: 1920,
+      maxResH: 1080,
       scaling: true,
     },
   })
@@ -118,14 +174,14 @@ async function main() {
       name: '5kW Power Supply',
       category: ProductCategory.POWER_EQUIPMENT,
       manufacturer: 'Mean Well',
-      modelNumber: 'SP-5000-48',
+      modelNumber: 'MW-5KW-48V',
       widthMm: 400,
       heightMm: 200,
       depthMm: 100,
-      weightKg: 12.0,
+      weightKg: 15,
       powerW: 5000,
-      voltageMin: 90,
-      voltageMax: 264,
+      voltageMin: 100,
+      voltageMax: 240,
       unitCost: 800.00,
       unitPrice: 1200.00,
     },
@@ -141,58 +197,58 @@ async function main() {
   })
 
   // Create Computing Equipment
-  const computer = await prisma.product.create({
+  const mediaServer = await prisma.product.create({
     data: {
       name: 'Media Server Pro',
       category: ProductCategory.COMPUTING,
-      manufacturer: 'HP',
-      modelNumber: 'HP-Z2-G9',
-      widthMm: 350,
-      heightMm: 100,
-      depthMm: 250,
-      weightKg: 5.5,
+      manufacturer: 'Disguise',
+      modelNumber: 'DS-VX4',
+      widthMm: 440,
+      heightMm: 88,
+      depthMm: 650,
+      weightKg: 8,
       powerW: 300,
       voltageMin: 100,
       voltageMax: 240,
-      unitCost: 2500.00,
-      unitPrice: 3500.00,
+      unitCost: 8000.00,
+      unitPrice: 12000.00,
     },
   })
 
   await prisma.computingSpec.create({
     data: {
-      productId: computer.id,
-      cpu: 'Intel i7-12700K',
+      productId: mediaServer.id,
+      cpu: 'Intel Xeon E5-2680',
       ramGb: 32,
       storageGb: 1000,
-      gpu: 'RTX 3060',
+      gpu: 'NVIDIA GTX 1080',
     },
   })
 
   // Create Lighting Equipment
-  const light = await prisma.product.create({
+  const ledPar = await prisma.product.create({
     data: {
-      name: 'LED Wash Light',
+      name: 'LED Par Light',
       category: ProductCategory.LIGHTING,
       manufacturer: 'Chauvet',
-      modelNumber: 'CH-WASH-FX',
+      modelNumber: 'CH-PAR-200',
       widthMm: 300,
-      heightMm: 200,
-      depthMm: 150,
-      weightKg: 3.2,
-      powerW: 150,
+      heightMm: 300,
+      depthMm: 200,
+      weightKg: 3,
+      powerW: 200,
       voltageMin: 100,
       voltageMax: 240,
-      unitCost: 450.00,
-      unitPrice: 650.00,
+      unitCost: 200.00,
+      unitPrice: 350.00,
     },
   })
 
   await prisma.lightingSpec.create({
     data: {
-      productId: light.id,
-      lumens: 15000,
-      colorTemp: 3200,
+      productId: ledPar.id,
+      lumens: 20000,
+      colorTemp: 5600,
       dmx: true,
     },
   })
@@ -200,26 +256,26 @@ async function main() {
   // Create Audio Equipment
   const speaker = await prisma.product.create({
     data: {
-      name: 'Active Speaker',
+      name: 'Line Array Speaker',
       category: ProductCategory.AUDIO,
       manufacturer: 'JBL',
-      modelNumber: 'JBL-PRX812',
-      widthMm: 400,
-      heightMm: 600,
-      depthMm: 350,
-      weightKg: 18.0,
+      modelNumber: 'JBL-VRX932',
+      widthMm: 450,
+      heightMm: 700,
+      depthMm: 400,
+      weightKg: 25,
       powerW: 1200,
       voltageMin: 100,
       voltageMax: 240,
-      unitCost: 800.00,
-      unitPrice: 1200.00,
+      unitCost: 1200.00,
+      unitPrice: 2000.00,
     },
   })
 
   await prisma.audioSpec.create({
     data: {
       productId: speaker.id,
-      type: 'Active Speaker',
+      type: 'Active',
       powerW: 1200,
       channels: 2,
     },
@@ -231,16 +287,16 @@ async function main() {
       name: 'PTZ Camera',
       category: ProductCategory.CAMERA,
       manufacturer: 'Sony',
-      modelNumber: 'SRG-X400',
-      widthMm: 150,
-      heightMm: 150,
-      depthMm: 200,
-      weightKg: 1.8,
-      powerW: 25,
+      modelNumber: 'SNY-SRGA',
+      widthMm: 200,
+      heightMm: 200,
+      depthMm: 300,
+      weightKg: 2,
+      powerW: 50,
       voltageMin: 12,
       voltageMax: 24,
-      unitCost: 1200.00,
-      unitPrice: 1800.00,
+      unitCost: 2500.00,
+      unitPrice: 4000.00,
     },
   })
 
@@ -257,19 +313,19 @@ async function main() {
   // Create Networking Equipment
   const switch1 = await prisma.product.create({
     data: {
-      name: 'Gigabit Switch',
+      name: 'Network Switch',
       category: ProductCategory.NETWORKING,
       manufacturer: 'Cisco',
-      modelNumber: 'SG350-28',
+      modelNumber: 'CS-SG350-28',
       widthMm: 440,
       heightMm: 44,
-      depthMm: 200,
-      weightKg: 2.5,
-      powerW: 35,
+      depthMm: 300,
+      weightKg: 3,
+      powerW: 50,
       voltageMin: 100,
       voltageMax: 240,
-      unitCost: 300.00,
-      unitPrice: 450.00,
+      unitCost: 500.00,
+      unitPrice: 800.00,
     },
   })
 
@@ -277,7 +333,7 @@ async function main() {
     data: {
       productId: switch1.id,
       ports: 28,
-      speedGbps: 1.0,
+      speedGbps: 1,
       poe: true,
     },
   })
@@ -285,28 +341,28 @@ async function main() {
   // Create Cable
   const cable = await prisma.product.create({
     data: {
-      name: 'Cat6 Cable',
+      name: 'Power Cable',
       category: ProductCategory.CABLE,
-      manufacturer: 'Belden',
-      modelNumber: 'CAT6-100M',
-      widthMm: 6,
-      heightMm: 6,
-      depthMm: 100000,
-      weightKg: 8.0,
+      manufacturer: 'Generic',
+      modelNumber: 'PC-16AWG-10M',
+      widthMm: 10,
+      heightMm: 10,
+      depthMm: 10000,
+      weightKg: 1,
       powerW: 0,
       voltageMin: 0,
-      voltageMax: 0,
-      unitCost: 120.00,
-      unitPrice: 180.00,
+      voltageMax: 600,
+      unitCost: 15.00,
+      unitPrice: 25.00,
     },
   })
 
   await prisma.cableSpec.create({
     data: {
       productId: cable.id,
-      type: 'Cat6',
-      lengthM: 100,
-      gauge: '23AWG',
+      type: 'Power',
+      lengthM: 10,
+      gauge: '16AWG',
     },
   })
 
@@ -317,46 +373,33 @@ async function main() {
       category: ProductCategory.HARDWARE,
       manufacturer: 'Generic',
       modelNumber: 'MB-500x500',
-      widthMm: 50,
-      heightMm: 50,
+      widthMm: 520,
+      heightMm: 520,
       depthMm: 20,
-      weightKg: 0.5,
+      weightKg: 2,
       powerW: 0,
       voltageMin: 0,
       voltageMax: 0,
       unitCost: 25.00,
-      unitPrice: 35.00,
+      unitPrice: 40.00,
     },
   })
 
   await prisma.hardwareSpec.create({
     data: {
       productId: hardware.id,
-      type: 'Mounting Bracket',
+      type: 'Mounting',
       material: 'Steel',
       loadKg: 50,
     },
   })
 
-  console.log('✅ Created products:')
-  console.log(`  - ${ledTile1.name} (${ledTile1.category})`)
-  console.log(`  - ${ledTile2.name} (${ledTile2.category})`)
-  console.log(`  - ${ledProcessor.name} (${ledProcessor.category})`)
-  console.log(`  - ${powerSupply.name} (${powerSupply.category})`)
-  console.log(`  - ${computer.name} (${computer.category})`)
-  console.log(`  - ${light.name} (${light.category})`)
-  console.log(`  - ${speaker.name} (${speaker.category})`)
-  console.log(`  - ${camera.name} (${camera.category})`)
-  console.log(`  - ${switch1.name} (${switch1.category})`)
-  console.log(`  - ${cable.name} (${cable.category})`)
-  console.log(`  - ${hardware.name} (${hardware.category})`)
-
-  console.log('🎉 Database seeding completed successfully!')
+  console.log('✅ Database seeded successfully!')
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seeding:', e)
+    console.error('❌ Error seeding database:', e)
     process.exit(1)
   })
   .finally(async () => {

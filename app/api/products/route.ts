@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { ProductCategory } from '@prisma/client'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const category = searchParams.get('category')
+    
+    const whereClause = category ? { category: category as ProductCategory } : {}
+    
     const products = await prisma.product.findMany({
+      where: whereClause,
       include: {
         ledTile: true,
         ledProcessor: true,
@@ -62,7 +69,7 @@ export async function POST(request: NextRequest) {
     const product = await prisma.product.create({
       data: {
         name,
-        category,
+        category: category as ProductCategory,
         manufacturer,
         modelNumber,
         unitCost: parseFloat(unitCost),

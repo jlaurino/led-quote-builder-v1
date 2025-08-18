@@ -27,6 +27,14 @@ enum UserRole {
   CUSTOMER
 }
 
+enum ReceivingCardType {
+  NOVASTAR
+  BROMPTON
+  SAMSUNG
+  COLORLIGHT
+  MEGAPIXEL
+}
+
 model Product {
   id           Int       @id @default(autoincrement())
   name         String
@@ -94,11 +102,25 @@ model LEDTileSpec {
   product        Product @relation(fields: [productId], references: [id])
   productId      Int     @unique
 
+  // Basic specs
   pixelPitchMm   Float
-  resolutionW    Int
-  resolutionH    Int
+  physicalWidthMm Float
+  physicalHeightMm Float
+  pixelWidth     Int
+  pixelHeight    Int
+  weightKg       Float
+  maxPowerW      Float
+  avgPowerW      Float
+  
+  // Technical specs
+  receivingCardType ReceivingCardType
   brightnessNits Int
-  refreshRateHz  Int?
+  refreshRateHz  Int
+  scanRate       Int?
+  
+  // Pricing
+  buyPrice       Float
+  sellPrice      Float
 }
 
 model LEDProcessorSpec {

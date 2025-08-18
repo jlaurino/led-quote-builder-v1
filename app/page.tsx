@@ -7,9 +7,10 @@ import PowerCalculator, { PowerCalculationResults } from '@/components/quote-bui
 import ProductSelector from '@/components/quote-builder/product-selector'
 import QuoteSummary from '@/components/quote-builder/quote-summary'
 import CustomerInfo from '@/components/quote-builder/customer-info'
+import ProductManager from '@/components/product-management/product-manager'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Monitor, Zap, Package, FileText, User, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react'
+import { Monitor, Zap, Package, FileText, User, CheckCircle, ArrowRight, ArrowLeft, Database } from 'lucide-react'
 
 interface QuoteItem {
   id: number
@@ -40,39 +41,46 @@ const QuoteBuilder: React.FC = () => {
 
   const steps: SidebarStep[] = [
     {
+      id: 'products',
+      title: 'Product Database',
+      description: 'Manage your product catalog',
+      completed: false,
+      active: currentStep === 0,
+    },
+    {
       id: 'display',
       title: 'Display Calculator',
       description: 'Calculate LED display requirements',
       completed: !!displayResults,
-      active: currentStep === 0,
+      active: currentStep === 1,
     },
     {
       id: 'power',
       title: 'Power Calculator',
       description: 'Calculate power requirements',
       completed: !!powerResults,
-      active: currentStep === 1,
+      active: currentStep === 2,
     },
     {
-      id: 'products',
+      id: 'selection',
       title: 'Product Selection',
       description: 'Add products to quote',
       completed: quoteItems.length > 0,
-      active: currentStep === 2,
+      active: currentStep === 3,
     },
     {
       id: 'customer',
       title: 'Customer Information',
       description: 'Enter customer and project details',
       completed: !!customerInfo,
-      active: currentStep === 3,
+      active: currentStep === 4,
     },
     {
       id: 'summary',
       title: 'Quote Summary',
       description: 'Review and export quote',
       completed: false,
-      active: currentStep === 4,
+      active: currentStep === 5,
     },
   ]
 
@@ -102,6 +110,24 @@ const QuoteBuilder: React.FC = () => {
 
   const handleDisplayCalculate = (results: DisplayCalculationResults) => {
     setDisplayResults(results)
+    
+    // If a tile was selected, automatically add it to the quote
+    if (results.selectedTile) {
+      const product = {
+        id: results.selectedTile.id,
+        name: results.selectedTile.name,
+        category: results.selectedTile.category,
+        manufacturer: results.selectedTile.manufacturer,
+        modelNumber: results.selectedTile.modelNumber,
+        unitCost: results.selectedTile.unitCost,
+        unitPrice: results.selectedTile.unitPrice || results.selectedTile.ledTile.sellPrice,
+        ledTile: results.selectedTile.ledTile,
+      }
+      
+      // Add the calculated number of tiles to the quote
+      handleAddProduct(product, results.totalTiles)
+    }
+    
     handleNext()
   }
 
@@ -154,31 +180,33 @@ const QuoteBuilder: React.FC = () => {
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 0:
+        return <ProductManager />
+      case 1:
         return (
           <DisplayCalculator
             onCalculate={handleDisplayCalculate}
           />
         )
-      case 1:
+      case 2:
         return (
           <PowerCalculator
             onCalculate={handlePowerCalculate}
           />
         )
-      case 2:
+      case 3:
         return (
           <ProductSelector
             onAddProduct={handleAddProduct}
           />
         )
-      case 3:
+      case 4:
         return (
           <CustomerInfo
             onSave={handleCustomerInfoSave}
             initialData={customerInfo || undefined}
           />
         )
-      case 4:
+      case 5:
         return (
           <QuoteSummary
             items={quoteItems}
