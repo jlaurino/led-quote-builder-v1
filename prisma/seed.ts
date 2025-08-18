@@ -39,15 +39,17 @@ async function main() {
       voltageMax: 240,
       unitCost: 450.00,
       unitPrice: 650.00,
-      ledTile: {
-        create: {
-          pixelPitchMm: 2.5,
-          resolutionW: 192,
-          resolutionH: 192,
-          brightnessNits: 5000,
-          refreshRateHz: 3840,
-        },
-      },
+    },
+  })
+
+  await prisma.lEDTileSpec.create({
+    data: {
+      productId: ledTile1.id,
+      pixelPitchMm: 2.5,
+      resolutionW: 192,
+      resolutionH: 192,
+      brightnessNits: 5000,
+      refreshRateHz: 3840,
     },
   })
 
@@ -66,15 +68,17 @@ async function main() {
       voltageMax: 240,
       unitCost: 380.00,
       unitPrice: 550.00,
-      ledTile: {
-        create: {
-          pixelPitchMm: 3.0,
-          resolutionW: 160,
-          resolutionH: 160,
-          brightnessNits: 4500,
-          refreshRateHz: 3840,
-        },
-      },
+    },
+  })
+
+  await prisma.lEDTileSpec.create({
+    data: {
+      productId: ledTile2.id,
+      pixelPitchMm: 3.0,
+      resolutionW: 160,
+      resolutionH: 160,
+      brightnessNits: 4500,
+      refreshRateHz: 3840,
     },
   })
 
@@ -94,15 +98,17 @@ async function main() {
       voltageMax: 240,
       unitCost: 1200.00,
       unitPrice: 1800.00,
-      ledProcessor: {
-        create: {
-          inputs: 4,
-          outputs: 8,
-          maxResW: 7680,
-          maxResH: 4320,
-          scaling: true,
-        },
-      },
+    },
+  })
+
+  await prisma.lEDProcessorSpec.create({
+    data: {
+      productId: ledProcessor.id,
+      inputs: 4,
+      outputs: 8,
+      maxResW: 7680,
+      maxResH: 4320,
+      scaling: true,
     },
   })
 
@@ -122,13 +128,15 @@ async function main() {
       voltageMax: 264,
       unitCost: 800.00,
       unitPrice: 1200.00,
-      powerEquipment: {
-        create: {
-          capacityW: 5000,
-          phase: 'Single',
-          redundancy: false,
-        },
-      },
+    },
+  })
+
+  await prisma.powerEquipmentSpec.create({
+    data: {
+      productId: powerSupply.id,
+      capacityW: 5000,
+      phase: 'Single',
+      redundancy: false,
     },
   })
 
@@ -148,14 +156,16 @@ async function main() {
       voltageMax: 240,
       unitCost: 2500.00,
       unitPrice: 3500.00,
-      computing: {
-        create: {
-          cpu: 'Intel i7-12700K',
-          ramGb: 32,
-          storageGb: 1000,
-          gpu: 'RTX 3060',
-        },
-      },
+    },
+  })
+
+  await prisma.computingSpec.create({
+    data: {
+      productId: computer.id,
+      cpu: 'Intel i7-12700K',
+      ramGb: 32,
+      storageGb: 1000,
+      gpu: 'RTX 3060',
     },
   })
 
@@ -175,13 +185,15 @@ async function main() {
       voltageMax: 240,
       unitCost: 450.00,
       unitPrice: 650.00,
-      lighting: {
-        create: {
-          lumens: 15000,
-          colorTemp: 3200,
-          dmx: true,
-        },
-      },
+    },
+  })
+
+  await prisma.lightingSpec.create({
+    data: {
+      productId: light.id,
+      lumens: 15000,
+      colorTemp: 3200,
+      dmx: true,
     },
   })
 
@@ -201,13 +213,15 @@ async function main() {
       voltageMax: 240,
       unitCost: 800.00,
       unitPrice: 1200.00,
-      audio: {
-        create: {
-          type: 'Active Speaker',
-          powerW: 1200,
-          channels: 2,
-        },
-      },
+    },
+  })
+
+  await prisma.audioSpec.create({
+    data: {
+      productId: speaker.id,
+      type: 'Active Speaker',
+      powerW: 1200,
+      channels: 2,
     },
   })
 
@@ -227,14 +241,16 @@ async function main() {
       voltageMax: 24,
       unitCost: 1200.00,
       unitPrice: 1800.00,
-      camera: {
-        create: {
-          sensor: '1/2.8" CMOS',
-          resolutionW: 1920,
-          resolutionH: 1080,
-          fps: 60,
-        },
-      },
+    },
+  })
+
+  await prisma.cameraSpec.create({
+    data: {
+      productId: camera.id,
+      sensor: '1/2.8" CMOS',
+      resolutionW: 1920,
+      resolutionH: 1080,
+      fps: 60,
     },
   })
 
@@ -254,13 +270,15 @@ async function main() {
       voltageMax: 240,
       unitCost: 300.00,
       unitPrice: 450.00,
-      networking: {
-        create: {
-          ports: 28,
-          speedGbps: 1.0,
-          poe: true,
-        },
-      },
+    },
+  })
+
+  await prisma.networkingSpec.create({
+    data: {
+      productId: switch1.id,
+      ports: 28,
+      speedGbps: 1.0,
+      poe: true,
     },
   })
 
@@ -280,13 +298,15 @@ async function main() {
       voltageMax: 0,
       unitCost: 120.00,
       unitPrice: 180.00,
-      cable: {
-        create: {
-          type: 'Cat6',
-          lengthM: 100,
-          gauge: '23AWG',
-        },
-      },
+    },
+  })
+
+  await prisma.cableSpec.create({
+    data: {
+      productId: cable.id,
+      type: 'Cat6',
+      lengthM: 100,
+      gauge: '23AWG',
     },
   })
 
@@ -306,13 +326,15 @@ async function main() {
       voltageMax: 0,
       unitCost: 25.00,
       unitPrice: 35.00,
-      hardware: {
-        create: {
-          type: 'Mounting Bracket',
-          material: 'Steel',
-          loadKg: 50,
-        },
-      },
+    },
+  })
+
+  await prisma.hardwareSpec.create({
+    data: {
+      productId: hardware.id,
+      type: 'Mounting Bracket',
+      material: 'Steel',
+      loadKg: 50,
     },
   })
 
