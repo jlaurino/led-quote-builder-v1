@@ -1,0 +1,322 @@
+You are building me a web-based quoting and bill of materials tool for LED digital display installations.  
+The app should let users:  
+- Enter display sizes and select products  
+- Store products in a database with specifications and prices  
+- Support “special product categories” with extra fields (e.g. LED processors, power gear, networking, etc.)  
+- Allow adding modules/packages (computers, cameras, audio, lighting, networking, etc.)  
+- Calculate equipment needs via logic modules (power draw, processors, accessories, etc.)  
+- Build a running quote with markups and fees  
+- Export a customer-facing quote and internal bill of materials  
+
+**Tech stack I want:**  
+- Backend: Node.js + Express + Prisma ORM  
+- Database: PostgreSQL  
+- Frontend: Next.js + React + Tailwind CSS  
+- API routes for CRUD (products, quotes, packages)  
+- Authentication for users (basic login system, can be JWT or NextAuth)  
+
+
+🔑 Core Features
+
+Authentication
+
+Role-based: Admin, Sales, Engineer (internal).
+
+Extendable to Customer users in future.
+
+Product & Package Management
+
+Admins can add products with: name, category, manufacturer, model number, specs (stored as JSON), and cost.
+
+Packages (bundles) of products, with quantities and notes.
+
+Calculation Modules (pluggable)
+
+Example: Power Calculator, Video Processor Selector, Unreal Node Calculator, Audio system calculator, Lighting package calculator. Set up the framework for these and we will add their details later. 
+
+Modules take user input (like display size, product choice) and return recommended products.
+
+Architecture should allow adding new modules easily.
+
+Quote Builder
+
+Sales user creates a Quote: customer info, selected display, chosen products/packages, calculated modules.
+
+Markups and fees applied from user preferences.
+
+Live running total preview.
+
+Exports
+
+Customer Quote PDF (clean, branded, hides costs, shows price).
+
+Internal BOM CSV/Excel (full detail: products, costs, totals).
+
+Database Schema
+
+Users
+
+Products
+
+Packages
+
+Package_Items
+
+Modules (for reference)
+
+Quotes
+
+Quote_Items
+
+Quote_Packages
+
+Future-Proofing
+
+Keep the architecture clean so the same backend can serve a future customer portal.
+
+Allow customers (later) to log in and self-configure using the same rules and product database.
+
+I would like the gui for this to operate with a somewhat step by step process with each section and calculator or steps through the processs on the lefthand column. 
+
+Please start by scaffolding the app with this **Prisma schema** for the database:  
+
+```prisma
+// schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Product {
+  id           Int       @id @default(autoincrement())
+  name         String
+  category     ProductCategory
+  manufacturer String?
+  modelNumber  String?
+
+  // General specs
+  widthMm      Float?
+  heightMm     Float?
+  depthMm      Float?
+  weightKg     Float?
+  powerW       Float?
+  voltageMin   Float?
+  voltageMax   Float?
+
+  // Flexible catch-all JSON
+  specs        Json?
+
+  unitCost     Float
+  unitPrice    Float?
+
+  // Relations
+  packageItems PackageItem[]
+  quoteItems   QuoteItem[]
+
+  // Special categories
+  ledTile         LEDTileSpec?
+  ledProcessor    LEDProcessorSpec?
+  powerEquipment  PowerEquipmentSpec?
+  computing       ComputingSpec?
+  lighting        LightingSpec?
+  audio           AudioSpec?
+  camera          CameraSpec?
+  gripEquipment   GripEquipmentSpec?
+  structuralItem  StructuralItemSpec?
+  gripItem        GripItemSpec?
+  networking      NetworkingSpec?
+  cable           CableSpec?
+  hardware        HardwareSpec?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum ProductCategory {
+  LED_TILE
+  LED_PROCESSOR
+  POWER_EQUIPMENT
+  COMPUTING
+  LIGHTING
+  AUDIO
+  CAMERA
+  GRIP_EQUIPMENT
+  STRUCTURAL_ITEM
+  GRIP_ITEM
+  NETWORKING
+  CABLE
+  HARDWARE
+  OTHER
+}
+
+model LEDTileSpec {
+  id             Int     @id @default(autoincrement())
+  product        Product @relation(fields: [productId], references: [id])
+  productId      Int     @unique
+
+  pixelPitchMm   Float
+  resolutionW    Int
+  resolutionH    Int
+  brightnessNits Int
+  refreshRateHz  Int?
+}
+
+model LEDProcessorSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  inputs    Int
+  outputs   Int
+  maxResW   Int
+  maxResH   Int
+  scaling   Boolean @default(false)
+}
+
+model PowerEquipmentSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  capacityW Float
+  phase     String
+  redundancy Boolean @default(false)
+}
+
+model ComputingSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  cpu       String
+  ramGb     Int
+  storageGb Int
+  gpu       String?
+}
+
+model LightingSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  lumens    Int
+  colorTemp Int
+  dmx       Boolean @default(false)
+}
+
+model AudioSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  type      String
+  powerW    Float?
+  channels  Int?
+}
+
+model CameraSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  sensor      String
+  resolutionW Int
+  resolutionH Int
+  fps         Int
+}
+
+model GripEquipmentSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  loadKg    Float
+  type      String
+}
+
+model StructuralItemSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  material  String
+  loadKg    Float
+  lengthMm  Float
+}
+
+model GripItemSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  type      String
+  sizeMm    Float?
+}
+
+model NetworkingSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  ports     Int
+  speedGbps Float
+  poe       Boolean @default(false)
+}
+
+model CableSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  type      String
+  lengthM   Float
+  gauge     String?
+}
+
+model HardwareSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  type      String
+  material  String
+  loadKg    Float?
+}
+
+// Package & Quote support
+model PackageItem {
+  id        Int     @id @default(autoincrement())
+  packageId Int
+  productId Int
+  quantity  Int
+
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model QuoteItem {
+  id        Int     @id @default(autoincrement())
+  quoteId   Int
+  productId Int
+  quantity  Int
+  price     Float
+
+  product   Product @relation(fields: [productId], references: [id])
+}
+```
+
+**Tasks for you (Cursor):**
+1. Scaffold a Next.js + Tailwind app with API routes for CRUD on `Product`, `QuoteItem`, and `PackageItem`.  
+2. Integrate Prisma with PostgreSQL using the schema above.  
+3. Build a simple UI to:  
+   - Add products by category  
+   - Attach special specs when needed  
+   - Start a quote and add products  
+   - Show running total with markup/fees  
+   - Export a quote (customer view) and a BOM (internal view).  
+
+Make the code production-ready but modular so I can expand with new calculators later.  

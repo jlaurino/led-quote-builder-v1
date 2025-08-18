@@ -1,0 +1,288 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(SALES)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  quotes    Quote[]
+}
+
+enum UserRole {
+  ADMIN
+  SALES
+  ENGINEER
+  CUSTOMER
+}
+
+model Product {
+  id           Int       @id @default(autoincrement())
+  name         String
+  category     ProductCategory
+  manufacturer String?
+  modelNumber  String?
+
+  // General specs
+  widthMm      Float?
+  heightMm     Float?
+  depthMm      Float?
+  weightKg     Float?
+  powerW       Float?
+  voltageMin   Float?
+  voltageMax   Float?
+
+  // Flexible catch-all JSON
+  specs        Json?
+
+  unitCost     Float
+  unitPrice    Float?
+
+  // Relations
+  packageItems PackageItem[]
+  quoteItems   QuoteItem[]
+
+  // Special categories
+  ledTile         LEDTileSpec?
+  ledProcessor    LEDProcessorSpec?
+  powerEquipment  PowerEquipmentSpec?
+  computing       ComputingSpec?
+  lighting        LightingSpec?
+  audio           AudioSpec?
+  camera          CameraSpec?
+  gripEquipment   GripEquipmentSpec?
+  structuralItem  StructuralItemSpec?
+  gripItem        GripItemSpec?
+  networking      NetworkingSpec?
+  cable           CableSpec?
+  hardware        HardwareSpec?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum ProductCategory {
+  LED_TILE
+  LED_PROCESSOR
+  POWER_EQUIPMENT
+  COMPUTING
+  LIGHTING
+  AUDIO
+  CAMERA
+  GRIP_EQUIPMENT
+  STRUCTURAL_ITEM
+  GRIP_ITEM
+  NETWORKING
+  CABLE
+  HARDWARE
+  OTHER
+}
+
+model LEDTileSpec {
+  id             Int     @id @default(autoincrement())
+  product        Product @relation(fields: [productId], references: [id])
+  productId      Int     @unique
+
+  pixelPitchMm   Float
+  resolutionW    Int
+  resolutionH    Int
+  brightnessNits Int
+  refreshRateHz  Int?
+}
+
+model LEDProcessorSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  inputs    Int
+  outputs   Int
+  maxResW   Int
+  maxResH   Int
+  scaling   Boolean @default(false)
+}
+
+model PowerEquipmentSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  capacityW Float
+  phase     String
+  redundancy Boolean @default(false)
+}
+
+model ComputingSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  cpu       String
+  ramGb     Int
+  storageGb Int
+  gpu       String?
+}
+
+model LightingSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  lumens    Int
+  colorTemp Int
+  dmx       Boolean @default(false)
+}
+
+model AudioSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  type      String
+  powerW    Float?
+  channels  Int?
+}
+
+model CameraSpec {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+
+  sensor      String
+  resolutionW Int
+  resolutionH Int
+  fps         Int
+}
+
+model GripEquipmentSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  loadKg    Float
+  type      String
+}
+
+model StructuralItemSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  material  String
+  loadKg    Float
+  lengthMm  Float
+}
+
+model GripItemSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  type      String
+  sizeMm    Float?
+}
+
+model NetworkingSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  ports     Int
+  speedGbps Float
+  poe       Boolean @default(false)
+}
+
+model CableSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  type      String
+  lengthM   Float
+  gauge     String?
+}
+
+model HardwareSpec {
+  id        Int @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int @unique
+
+  type      String
+  material  String
+  loadKg    Float?
+}
+
+model Package {
+  id          Int           @id @default(autoincrement())
+  name        String
+  description String?
+  items       PackageItem[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model PackageItem {
+  id        Int     @id @default(autoincrement())
+  packageId Int
+  productId Int
+  quantity  Int
+
+  package   Package @relation(fields: [packageId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Quote {
+  id          Int         @id @default(autoincrement())
+  customerName String
+  customerEmail String?
+  projectName String
+  description String?
+  
+  // Pricing
+  subtotal    Float       @default(0)
+  markup      Float       @default(0)
+  fees        Float       @default(0)
+  total       Float       @default(0)
+  
+  // Status
+  status      QuoteStatus @default(DRAFT)
+  
+  // Relations
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  items       QuoteItem[]
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model QuoteItem {
+  id        Int     @id @default(autoincrement())
+  quoteId   Int
+  productId Int
+  quantity  Int
+  price     Float
+
+  quote     Quote   @relation(fields: [quoteId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
