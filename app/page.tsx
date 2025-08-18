@@ -21,7 +21,7 @@ interface QuoteItem {
   totalPrice: number
 }
 
-interface CustomerInfo {
+interface CustomerInfoData {
   customerName: string
   customerEmail: string
   projectName: string
@@ -32,7 +32,7 @@ interface CustomerInfo {
 
 const QuoteBuilder: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0)
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfoData | null>(null)
   const [displayResults, setDisplayResults] = useState<DisplayCalculationResults | null>(null)
   const [powerResults, setPowerResults] = useState<PowerCalculationResults | null>(null)
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([])
@@ -40,31 +40,31 @@ const QuoteBuilder: React.FC = () => {
 
   const steps: SidebarStep[] = [
     {
-      id: 'customer',
-      title: 'Customer Information',
-      description: 'Enter customer and project details',
-      completed: !!customerInfo,
-      active: currentStep === 0,
-    },
-    {
       id: 'display',
       title: 'Display Calculator',
       description: 'Calculate LED display requirements',
       completed: !!displayResults,
-      active: currentStep === 1,
+      active: currentStep === 0,
     },
     {
       id: 'power',
       title: 'Power Calculator',
       description: 'Calculate power requirements',
       completed: !!powerResults,
-      active: currentStep === 2,
+      active: currentStep === 1,
     },
     {
       id: 'products',
       title: 'Product Selection',
       description: 'Add products to quote',
       completed: quoteItems.length > 0,
+      active: currentStep === 2,
+    },
+    {
+      id: 'customer',
+      title: 'Customer Information',
+      description: 'Enter customer and project details',
+      completed: !!customerInfo,
       active: currentStep === 3,
     },
     {
@@ -95,7 +95,7 @@ const QuoteBuilder: React.FC = () => {
     }
   }
 
-  const handleCustomerInfoSave = (info: CustomerInfo) => {
+  const handleCustomerInfoSave = (info: CustomerInfoData) => {
     setCustomerInfo(info)
     handleNext()
   }
@@ -155,27 +155,27 @@ const QuoteBuilder: React.FC = () => {
     switch (currentStep) {
       case 0:
         return (
-          <CustomerInfo
-            onSave={handleCustomerInfoSave}
-            initialData={customerInfo || undefined}
-          />
-        )
-      case 1:
-        return (
           <DisplayCalculator
             onCalculate={handleDisplayCalculate}
           />
         )
-      case 2:
+      case 1:
         return (
           <PowerCalculator
             onCalculate={handlePowerCalculate}
           />
         )
-      case 3:
+      case 2:
         return (
           <ProductSelector
             onAddProduct={handleAddProduct}
+          />
+        )
+      case 3:
+        return (
+          <CustomerInfo
+            onSave={handleCustomerInfoSave}
+            initialData={customerInfo || undefined}
           />
         )
       case 4:

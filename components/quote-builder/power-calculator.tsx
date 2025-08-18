@@ -179,3 +179,4 @@ const PowerCalculator: React.FC<PowerCalculatorProps> = ({ onCalculate }) => {
 export default PowerCalculator
 
 
+
