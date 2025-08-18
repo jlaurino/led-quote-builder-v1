@@ -63,13 +63,19 @@ const DisplayCalculator: React.FC<DisplayCalculatorProps> = ({ onCalculate }) =>
   const fetchLEDTiles = async () => {
     try {
       const response = await fetch('/api/products?category=LED_TILE')
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
       const data = await response.json()
-      setLedTiles(data)
-      if (data.length > 0) {
-        setSelectedTile(data[0])
+      // Ensure data is always an array
+      const tiles = Array.isArray(data) ? data : []
+      setLedTiles(tiles)
+      if (tiles.length > 0) {
+        setSelectedTile(tiles[0])
       }
     } catch (error) {
       console.error('Error fetching LED tiles:', error)
+      setLedTiles([])
     } finally {
       setLoading(false)
     }

@@ -64,16 +64,21 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({ onAddProduct }) => {
   const fetchProducts = async () => {
     try {
       const response = await fetch('/api/products')
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
       const data = await response.json()
-      setProducts(data)
+      // Ensure data is always an array
+      setProducts(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching products:', error)
+      setProducts([])
     } finally {
       setLoading(false)
     }
   }
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = (Array.isArray(products) ? products : []).filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.modelNumber?.toLowerCase().includes(searchTerm.toLowerCase())
