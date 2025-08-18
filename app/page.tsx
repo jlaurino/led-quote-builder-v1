@@ -39,60 +39,107 @@ const QuoteBuilder: React.FC = () => {
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([])
   const [nextItemId, setNextItemId] = useState(1)
 
-  const steps: SidebarStep[] = [
-    {
-      id: 'products',
-      title: 'Product Database',
-      description: 'Manage your product catalog',
-      completed: false,
-      active: currentStep === 0,
-    },
+  // Quote Builder Steps
+  const quoteBuilderSteps: SidebarStep[] = [
     {
       id: 'display',
       title: 'Display Calculator',
       description: 'Calculate LED display requirements',
       completed: !!displayResults,
-      active: currentStep === 1,
+      active: currentStep === 0,
     },
     {
       id: 'power',
       title: 'Power Calculator',
       description: 'Calculate power requirements',
       completed: !!powerResults,
-      active: currentStep === 2,
+      active: currentStep === 1,
     },
     {
       id: 'selection',
       title: 'Product Selection',
       description: 'Add products to quote',
       completed: quoteItems.length > 0,
-      active: currentStep === 3,
+      active: currentStep === 2,
     },
     {
       id: 'customer',
       title: 'Customer Information',
       description: 'Enter customer and project details',
       completed: !!customerInfo,
-      active: currentStep === 4,
+      active: currentStep === 3,
     },
     {
       id: 'summary',
       title: 'Quote Summary',
       description: 'Review and export quote',
       completed: false,
+      active: currentStep === 4,
+    },
+  ]
+
+  // Product Database Steps
+  const productDatabaseSteps: SidebarStep[] = [
+    {
+      id: 'products',
+      title: 'Product Management',
+      description: 'Add, edit, and manage products',
+      completed: false,
       active: currentStep === 5,
     },
   ]
 
+  // Combined steps with sections
+  const steps: SidebarStep[] = [
+    // Quote Builder Section
+    {
+      id: 'quote-builder-section',
+      title: 'Quote Builder',
+      description: 'Build and manage quotes',
+      completed: false,
+      active: currentStep < 5,
+      isSection: true,
+    },
+    ...quoteBuilderSteps,
+    
+    // Product Database Section
+    {
+      id: 'product-database-section',
+      title: 'Product Database',
+      description: 'Manage product catalog',
+      completed: false,
+      active: currentStep >= 5,
+      isSection: true,
+    },
+    ...productDatabaseSteps,
+  ]
+
   const handleStepClick = (stepId: string) => {
-    const stepIndex = steps.findIndex(step => step.id === stepId)
-    if (stepIndex !== -1) {
+    // Handle section clicks - don't navigate to sections
+    if (stepId.includes('-section')) {
+      return
+    }
+    
+    // Map step IDs to actual step indices
+    const stepIdToIndex: { [key: string]: number } = {
+      'display': 0,
+      'power': 1,
+      'selection': 2,
+      'customer': 3,
+      'summary': 4,
+      'products': 5,
+    }
+    
+    const stepIndex = stepIdToIndex[stepId]
+    if (stepIndex !== undefined) {
       setCurrentStep(stepIndex)
     }
   }
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
+    // Define the maximum step index (5 for products)
+    const maxStep = 5
+    if (currentStep < maxStep) {
       setCurrentStep(currentStep + 1)
     }
   }
@@ -245,7 +292,9 @@ const QuoteBuilder: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm text-gray-400">Current Step</p>
-                <p className="text-lg font-semibold text-gray-100">{currentStep + 1} of {steps.length}</p>
+                <p className="text-lg font-semibold text-gray-100">
+                  {currentStep < 5 ? `${currentStep + 1} of 5` : 'Product Database'}
+                </p>
               </div>
             </div>
           </div>
@@ -268,14 +317,16 @@ const QuoteBuilder: React.FC = () => {
               
               <div className="text-center">
                 <h2 className="text-xl font-semibold text-gray-100">
-                  {steps[currentStep].title}
+                  {currentStep < 5 ? quoteBuilderSteps[currentStep].title : productDatabaseSteps[0].title}
                 </h2>
-                <p className="text-gray-400">{steps[currentStep].description}</p>
+                <p className="text-gray-400">
+                  {currentStep < 5 ? quoteBuilderSteps[currentStep].description : productDatabaseSteps[0].description}
+                </p>
               </div>
 
               <Button
                 onClick={handleNext}
-                disabled={currentStep === steps.length - 1}
+                disabled={currentStep === 5}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Next

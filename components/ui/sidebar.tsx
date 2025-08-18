@@ -8,6 +8,7 @@ export interface SidebarStep {
   description?: string
   completed?: boolean
   active?: boolean
+  isSection?: boolean
 }
 
 interface SidebarProps {
@@ -32,49 +33,75 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
           <p className="text-sm text-gray-400">Step-by-step process</p>
         </div>
         
-        <div className="space-y-2">
+        <div className="space-y-4">
           {steps.map((step, index) => (
-            <div
-              key={step.id}
-              className={cn(
-                "flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors",
-                {
-                  "bg-blue-600/20 border border-blue-500/30": step.active,
-                  "hover:bg-gray-700/50": !step.active,
-                }
-              )}
-              onClick={() => onStepClick?.(step.id)}
-            >
-              <div className="flex-shrink-0">
-                {step.completed ? (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                ) : step.active ? (
-                  <Circle className="w-5 h-5 text-blue-500 fill-current" />
-                ) : (
-                  <Circle className="w-5 h-5 text-gray-500" />
-                )}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <p className={cn(
-                  "text-sm font-medium",
-                  {
-                    "text-blue-400": step.active,
-                    "text-green-400": step.completed,
-                    "text-gray-300": !step.active && !step.completed,
-                  }
-                )}>
-                  {step.title}
-                </p>
-                {step.description && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    {step.description}
-                  </p>
-                )}
-              </div>
-              
-              {step.active && (
-                <ChevronRight className="w-4 h-4 text-blue-400" />
+            <div key={step.id}>
+              {step.isSection ? (
+                // Section Header
+                <div className="mb-3">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex-1 h-px bg-gray-600"></div>
+                    <h3 className={cn(
+                      "text-sm font-semibold px-2",
+                      {
+                        "text-blue-400": step.active,
+                        "text-gray-400": !step.active,
+                      }
+                    )}>
+                      {step.title}
+                    </h3>
+                    <div className="flex-1 h-px bg-gray-600"></div>
+                  </div>
+                  {step.description && (
+                    <p className="text-xs text-gray-500 text-center mb-3">
+                      {step.description}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                // Regular Step
+                <div
+                  className={cn(
+                    "flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors",
+                    {
+                      "bg-blue-600/20 border border-blue-500/30": step.active,
+                      "hover:bg-gray-700/50": !step.active,
+                    }
+                  )}
+                  onClick={() => onStepClick?.(step.id)}
+                >
+                  <div className="flex-shrink-0">
+                    {step.completed ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : step.active ? (
+                      <Circle className="w-5 h-5 text-blue-500 fill-current" />
+                    ) : (
+                      <Circle className="w-5 h-5 text-gray-500" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <p className={cn(
+                      "text-sm font-medium",
+                      {
+                        "text-blue-400": step.active,
+                        "text-green-400": step.completed,
+                        "text-gray-300": !step.active && !step.completed,
+                      }
+                    )}>
+                      {step.title}
+                    </p>
+                    {step.description && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {step.description}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {step.active && (
+                    <ChevronRight className="w-4 h-4 text-blue-400" />
+                  )}
+                </div>
               )}
             </div>
           ))}
