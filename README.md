@@ -28,7 +28,7 @@ A professional web-based quoting and bill of materials tool for LED digital disp
 - PostgreSQL database
 - npm or yarn package manager
 
-### Installation
+#### Installation
 
 1. **Clone the repository**
    ```bash
