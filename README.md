@@ -25,10 +25,10 @@ A professional web-based quoting and bill of materials tool for LED digital disp
 ### Prerequisites
 
 - Node.js 18+ 
-- PostgreSQL database
+- PostgreSQL database (Supabase recommended)
 - npm or yarn package manager
 
-#### Installation
+### Local Development
 
 1. **Clone the repository**
    ```bash
@@ -44,7 +44,7 @@ A professional web-based quoting and bill of materials tool for LED digital disp
 3. **Set up environment variables**
    Create a `.env.local` file in the root directory:
    ```env
-   DATABASE_URL="postgresql://postgres:[Y!$$vjik3oCs7^N5uNRA]@db.fxybegulllurqgdavkme.supabase.co:5432/postgres"
+   DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres"
    NEXTAUTH_SECRET="your-secret-key"
    NEXTAUTH_URL="http://localhost:3000"
    ```
@@ -56,6 +56,9 @@ A professional web-based quoting and bill of materials tool for LED digital disp
    
    # Push schema to database
    npm run db:push
+   
+   # Seed with sample data
+   npm run db:seed
    ```
 
 5. **Start the development server**
@@ -65,6 +68,60 @@ A professional web-based quoting and bill of materials tool for LED digital disp
 
 6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
+
+### Deployment to Vercel with Supabase
+
+1. **Set up Supabase Database**
+   - Create a new project at [supabase.com](https://supabase.com)
+   - Get your database connection string from Settings → Database
+   - Copy the URI connection string
+
+2. **Deploy to Vercel**
+   - Connect your GitHub repository to Vercel
+   - Add environment variables in Vercel dashboard:
+     - `DATABASE_URL`: Your Supabase connection string
+     - `NEXTAUTH_SECRET`: A random secret key
+     - `NEXTAUTH_URL`: Your Vercel domain (e.g., `https://your-app.vercel.app`)
+
+3. **Deploy and Setup Database**
+   - Vercel will automatically run `npm run build` which includes Prisma generation
+   - After deployment, run database setup:
+     ```bash
+     # Connect to your Vercel deployment
+     vercel env pull .env.local
+     
+     # Push schema and seed data
+     npm run db:push
+     npm run db:seed
+     ```
+
+4. **Verify Deployment**
+   - Check your Vercel deployment URL
+   - Verify database connection in Supabase dashboard
+
+### Troubleshooting Vercel Deployment
+
+#### Build Errors
+- **TypeScript Errors**: Ensure all dependencies are installed and Prisma client is generated
+- **Prisma Errors**: Check that `DATABASE_URL` is correctly set in Vercel environment variables
+- **Module Resolution**: Verify all imports use correct paths
+
+#### Database Connection Issues
+- **Connection Refused**: Check Supabase project status and connection string
+- **Authentication Failed**: Verify database password in connection string
+- **Schema Issues**: Run `npm run db:push` after deployment to ensure schema is up to date
+
+#### Common Solutions
+```bash
+# Regenerate Prisma client
+npm run db:generate
+
+# Reset database schema
+npm run db:push --force-reset
+
+# Check Prisma status
+npx prisma db pull
+```
 
 ## Project Structure
 
