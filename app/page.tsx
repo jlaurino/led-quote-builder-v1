@@ -227,33 +227,31 @@ const QuoteBuilder: React.FC = () => {
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 0:
-        return <ProductManager />
-      case 1:
         return (
           <DisplayCalculator
             onCalculate={handleDisplayCalculate}
           />
         )
-      case 2:
+      case 1:
         return (
           <PowerCalculator
             onCalculate={handlePowerCalculate}
           />
         )
-      case 3:
+      case 2:
         return (
           <ProductSelector
             onAddProduct={handleAddProduct}
           />
         )
-      case 4:
+      case 3:
         return (
           <CustomerInfo
             onSave={handleCustomerInfoSave}
             initialData={customerInfo || undefined}
           />
         )
-      case 5:
+      case 4:
         return (
           <QuoteSummary
             items={quoteItems}
@@ -267,6 +265,8 @@ const QuoteBuilder: React.FC = () => {
             onExportBOM={handleExportBOM}
           />
         )
+      case 5:
+        return <ProductManager />
       default:
         return null
     }
