@@ -19,7 +19,20 @@ async function main() {
 
   console.log('✅ Created admin user:', adminUser.email)
 
-  // Clear existing products
+  // Clear existing products and related specs
+  await prisma.lEDTileSpec.deleteMany()
+  await prisma.lEDProcessorSpec.deleteMany()
+  await prisma.powerEquipmentSpec.deleteMany()
+  await prisma.computingSpec.deleteMany()
+  await prisma.lightingSpec.deleteMany()
+  await prisma.audioSpec.deleteMany()
+  await prisma.cameraSpec.deleteMany()
+  await prisma.gripEquipmentSpec.deleteMany()
+  await prisma.structuralItemSpec.deleteMany()
+  await prisma.gripItemSpec.deleteMany()
+  await prisma.networkingSpec.deleteMany()
+  await prisma.cableSpec.deleteMany()
+  await prisma.hardwareSpec.deleteMany()
   await prisma.product.deleteMany({})
   console.log('🧹 Cleared existing products')
 
@@ -28,6 +41,7 @@ async function main() {
     data: {
       name: 'P2.5 LED Tile',
       category: ProductCategory.LED_TILE,
+      subcategory: 'Indoor',
       manufacturer: 'NovaStar',
       modelNumber: 'NS-P2.5-500x500',
       widthMm: 500,
@@ -66,6 +80,7 @@ async function main() {
     data: {
       name: 'P3 LED Tile',
       category: ProductCategory.LED_TILE,
+      subcategory: 'Outdoor',
       manufacturer: 'NovaStar',
       modelNumber: 'NS-P3-500x500',
       widthMm: 500,
@@ -104,6 +119,7 @@ async function main() {
     data: {
       name: 'P4 LED Tile',
       category: ProductCategory.LED_TILE,
+      subcategory: 'Rental',
       manufacturer: 'Brompton',
       modelNumber: 'BR-P4-500x500',
       widthMm: 500,
@@ -143,6 +159,7 @@ async function main() {
     data: {
       name: 'VX1000 LED Processor',
       category: ProductCategory.LED_PROCESSOR,
+      subcategory: 'Video Processor',
       manufacturer: 'NovaStar',
       modelNumber: 'NS-VX1000',
       widthMm: 440,

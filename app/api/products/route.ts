@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     const { 
       name, 
       category, 
+      subcategory,
       manufacturer, 
       modelNumber, 
       unitCost, 
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         category: category as ProductCategory,
+        subcategory,
         manufacturer,
         modelNumber,
         unitCost: parseFloat(unitCost),

@@ -13,6 +13,7 @@ interface Product {
   id: number
   name: string
   category: ProductCategory
+  subcategory?: string
   manufacturer?: string
   modelNumber?: string
   unitCost: number
@@ -41,6 +42,7 @@ interface ProductFormData {
   modelNumber: string
   description: string
   category: ProductCategory
+  subcategory: string
   unitCost: string
   unitPrice: string
   // LED Tile specific fields
@@ -73,6 +75,7 @@ const ProductManager: React.FC = () => {
     modelNumber: '',
     description: '',
     category: ProductCategory.LED_TILE,
+    subcategory: '',
     unitCost: '',
     unitPrice: '',
     pixelPitchMm: '',
@@ -120,6 +123,7 @@ const ProductManager: React.FC = () => {
       manufacturer: formData.manufacturer,
       modelNumber: formData.modelNumber,
       category: formData.category,
+      subcategory: formData.subcategory,
       unitCost: parseFloat(formData.unitCost),
       unitPrice: parseFloat(formData.unitPrice),
       specs: { description: formData.description },
@@ -174,6 +178,7 @@ const ProductManager: React.FC = () => {
       modelNumber: product.modelNumber || '',
       description: '',
       category: product.category,
+      subcategory: product.subcategory || '',
       unitCost: product.unitCost.toString(),
       unitPrice: (product.unitPrice || 0).toString(),
       pixelPitchMm: product.ledTile?.pixelPitchMm.toString() || '',
@@ -219,6 +224,7 @@ const ProductManager: React.FC = () => {
       modelNumber: '',
       description: '',
       category: ProductCategory.LED_TILE,
+      subcategory: '',
       unitCost: '',
       unitPrice: '',
       pixelPitchMm: '',
@@ -256,6 +262,60 @@ const ProductManager: React.FC = () => {
       case ProductCategory.LED_PROCESSOR: return <Package className="w-4 h-4" />
       case ProductCategory.POWER_EQUIPMENT: return <Package className="w-4 h-4" />
       default: return <Package className="w-4 h-4" />
+    }
+  }
+
+  const getCategorySubcategorySuggestions = (category: ProductCategory): string[] => {
+    switch (category) {
+      case ProductCategory.LED_TILE:
+        return ['Indoor', 'Outdoor', 'Rental', 'Fixed Installation', 'Mobile', 'Curved', 'Flexible']
+      case ProductCategory.LED_PROCESSOR:
+        return ['Video Processor', 'Scaler', 'Controller', 'Media Server', 'Sync Box']
+      case ProductCategory.POWER_EQUIPMENT:
+        return ['Power Supply', 'Distribution', 'UPS', 'Generator', 'Transformer']
+      case ProductCategory.COMPUTING:
+        return ['Workstation', 'Server', 'Media PC', 'Laptop', 'Mini PC']
+      case ProductCategory.LIGHTING:
+        return ['LED Fixture', 'Moving Light', 'Conventional', 'Effect Light', 'Control']
+      case ProductCategory.AUDIO:
+        return ['Speaker', 'Amplifier', 'Mixer', 'Microphone', 'Processor']
+      case ProductCategory.CAMERA:
+        return ['PTZ Camera', 'Fixed Camera', 'Action Camera', 'Broadcast Camera']
+      case ProductCategory.NETWORKING:
+        return ['Switch', 'Router', 'Access Point', 'Cable', 'Adapter']
+      case ProductCategory.CABLE:
+        return ['Power Cable', 'Data Cable', 'Video Cable', 'Audio Cable', 'Network Cable']
+      case ProductCategory.HARDWARE:
+        return ['Mounting', 'Bracket', 'Hardware Kit', 'Tool', 'Accessory']
+      default:
+        return []
+    }
+  }
+
+  const getCategoryDescription = (category: ProductCategory): string => {
+    switch (category) {
+      case ProductCategory.LED_TILE:
+        return 'LED display tiles with pixel pitch, resolution, and technical specifications'
+      case ProductCategory.LED_PROCESSOR:
+        return 'Video processors and controllers for LED displays'
+      case ProductCategory.POWER_EQUIPMENT:
+        return 'Power supplies, distribution, and electrical equipment'
+      case ProductCategory.COMPUTING:
+        return 'Computers, workstations, and computing hardware'
+      case ProductCategory.LIGHTING:
+        return 'Stage lighting, effects, and control systems'
+      case ProductCategory.AUDIO:
+        return 'Audio equipment, speakers, and sound systems'
+      case ProductCategory.CAMERA:
+        return 'Cameras and video equipment'
+      case ProductCategory.NETWORKING:
+        return 'Network equipment and connectivity solutions'
+      case ProductCategory.CABLE:
+        return 'Cables and connectivity solutions'
+      case ProductCategory.HARDWARE:
+        return 'Mounting hardware, brackets, and accessories'
+      default:
+        return 'General product category'
     }
   }
 
@@ -333,20 +393,59 @@ const ProductManager: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Master Category</label>
                   <Select
                     value={formData.category}
                     onChange={(e) => updateFormData('category', e.target.value)}
                     required
                   >
+                    <option value="">Select a category...</option>
                     {Object.values(ProductCategory).map(category => (
                       <option key={category} value={category}>
                         {category.replace(/_/g, ' ')}
                       </option>
                     ))}
                   </Select>
+                  {formData.category && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {getCategoryDescription(formData.category)}
+                    </p>
+                  )}
                 </div>
               </div>
+
+              {/* Subcategory */}
+              {formData.category && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Subcategory</label>
+                  <div className="flex space-x-2">
+                    <Input
+                      value={formData.subcategory}
+                      onChange={(e) => updateFormData('subcategory', e.target.value)}
+                      placeholder="Enter subcategory or select from suggestions..."
+                      className="bg-gray-700 border-gray-600 text-gray-100"
+                    />
+                    <Select
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          updateFormData('subcategory', e.target.value)
+                        }
+                      }}
+                    >
+                      <option value="">Suggestions</option>
+                      {getCategorySubcategorySuggestions(formData.category).map(suggestion => (
+                        <option key={suggestion} value={suggestion}>
+                          {suggestion}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Choose a subcategory to help organize your products
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -633,6 +732,9 @@ const ProductManager: React.FC = () => {
                 <p><strong className="text-gray-300">Manufacturer:</strong> <span className="text-gray-400">{product.manufacturer}</span></p>
                 <p><strong className="text-gray-300">Model:</strong> <span className="text-gray-400">{product.modelNumber}</span></p>
                 <p><strong className="text-gray-300">Category:</strong> <span className="text-gray-400">{product.category.replace(/_/g, ' ')}</span></p>
+                {product.subcategory && (
+                  <p><strong className="text-gray-300">Subcategory:</strong> <span className="text-gray-400">{product.subcategory}</span></p>
+                )}
                 <p><strong className="text-gray-300">Cost:</strong> <span className="text-gray-400">${product.unitCost}</span></p>
                 <p><strong className="text-gray-300">Price:</strong> <span className="text-gray-400">${product.unitPrice || product.unitCost}</span></p>
                 

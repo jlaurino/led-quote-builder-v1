@@ -11,6 +11,7 @@ export async function PUT(
     const { 
       name, 
       category, 
+      subcategory,
       manufacturer, 
       modelNumber, 
       unitCost, 
@@ -40,6 +41,7 @@ export async function PUT(
       data: {
         name,
         category: category as ProductCategory,
+        subcategory,
         manufacturer,
         modelNumber,
         unitCost: parseFloat(unitCost),
