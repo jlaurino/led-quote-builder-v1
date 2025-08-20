@@ -1,4 +1,4 @@
-// File: D:\Google Drive\Code\LED Quote Builder Cursor V1\app\layout.tsx
+// File: C:\Users\jlaur\OneDrive\Documents\GitHub\led-quote-builder-v1\app\layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

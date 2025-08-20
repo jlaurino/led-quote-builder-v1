@@ -1,4 +1,4 @@
-// File: D:\Google Drive\Code\LED Quote Builder Cursor V1\app\api\products\route.ts
+// File: C:\Users\jlaur\OneDrive\Documents\GitHub\led-quote-builder-v1\app\api\products\route.ts
 import * as entry from '../../../../../app/api/products/route.js'
 import type { NextRequest } from 'next/server.js'
 

@@ -118,34 +118,38 @@ const ProductManager: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    console.log('Form data before submission:', formData) // Debug log
+    
     const productData = {
       name: formData.name,
       manufacturer: formData.manufacturer,
       modelNumber: formData.modelNumber,
       category: formData.category,
       subcategory: formData.subcategory,
-      unitCost: parseFloat(formData.unitCost),
-      unitPrice: parseFloat(formData.unitPrice),
+      unitCost: formData.unitCost, // Send as string, let API handle parsing
+      unitPrice: formData.unitPrice, // Send as string, let API handle parsing
       specs: { description: formData.description },
       ...(formData.category === ProductCategory.LED_TILE && {
         ledTile: {
-          pixelPitchMm: parseFloat(formData.pixelPitchMm),
-          physicalWidthMm: parseFloat(formData.physicalWidthMm),
-          physicalHeightMm: parseFloat(formData.physicalHeightMm),
-          pixelWidth: parseInt(formData.pixelWidth),
-          pixelHeight: parseInt(formData.pixelHeight),
-          weightKg: parseFloat(formData.weightKg),
-          maxPowerW: parseFloat(formData.maxPowerW),
-          avgPowerW: parseFloat(formData.avgPowerW),
+          pixelPitchMm: formData.pixelPitchMm,
+          physicalWidthMm: formData.physicalWidthMm,
+          physicalHeightMm: formData.physicalHeightMm,
+          pixelWidth: formData.pixelWidth,
+          pixelHeight: formData.pixelHeight,
+          weightKg: formData.weightKg,
+          maxPowerW: formData.maxPowerW,
+          avgPowerW: formData.avgPowerW,
           receivingCardType: formData.receivingCardType,
-          brightnessNits: parseInt(formData.brightnessNits),
-          refreshRateHz: parseInt(formData.refreshRateHz),
-          scanRate: formData.scanRate ? parseInt(formData.scanRate) : null,
-          buyPrice: parseFloat(formData.buyPrice),
-          sellPrice: parseFloat(formData.sellPrice),
+          brightnessNits: formData.brightnessNits,
+          refreshRateHz: formData.refreshRateHz,
+          scanRate: formData.scanRate,
+          buyPrice: formData.buyPrice,
+          sellPrice: formData.sellPrice,
         }
       })
     }
+
+    console.log('Product data being sent:', productData) // Debug log
 
     try {
       const url = editingProduct ? `/api/products/${editingProduct.id}` : '/api/products'
@@ -158,15 +162,26 @@ const ProductManager: React.FC = () => {
       })
 
       if (response.ok) {
+        console.log('Product saved successfully') // Debug log
         setShowForm(false)
         setEditingProduct(null)
         resetForm()
         fetchProducts()
       } else {
-        console.error('Failed to save product')
+        const errorText = await response.text()
+        console.error('Failed to save product:', response.status, errorText)
+        
+        // Try to parse the error response
+        try {
+          const errorData = JSON.parse(errorText)
+          alert(`Error: ${errorData.error || 'Unknown error occurred'}`)
+        } catch {
+          alert(`Error: Server returned ${response.status}`)
+        }
       }
     } catch (error) {
       console.error('Error saving product:', error)
+      alert('Network error occurred. Please try again.')
     }
   }
 
