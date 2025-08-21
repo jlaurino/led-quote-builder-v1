@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
-import { Calculator, Monitor, Database, CheckCircle } from 'lucide-react'
+import { Calculator, Monitor, Database, CheckCircle, Package, ArrowRight } from 'lucide-react'
 
 interface DisplayCalculatorProps {
   onCalculate: (results: DisplayCalculationResults) => void
@@ -25,6 +25,8 @@ export interface DisplayCalculationResults {
     width: string
     height: string
   }
+  nickname?: string
+  isContinue?: boolean
 }
 
 interface LEDTile {
@@ -61,6 +63,7 @@ const DisplayCalculator: React.FC<DisplayCalculatorProps> = ({ onCalculate }) =>
   const [loading, setLoading] = useState(true)
   const [calculationResults, setCalculationResults] = useState<DisplayCalculationResults | null>(null)
   const [hasCalculated, setHasCalculated] = useState(false)
+  const [displayNickname, setDisplayNickname] = useState('')
 
   useEffect(() => {
     fetchLEDTiles()
@@ -136,7 +139,7 @@ const DisplayCalculator: React.FC<DisplayCalculatorProps> = ({ onCalculate }) =>
     const actualWidth = tilesX * tileWidth
     const actualHeight = tilesY * tileHeight
     const totalArea = actualWidth * actualHeight
-    const totalPower = totalTiles * tilePower
+    const totalPower = totalTiles * selectedTile.ledTile.maxPowerW // Use max power for total power
     const estimatedCost = totalTiles * tileCost
 
     // Enhanced processor recommendation based on actual tile specs
@@ -172,10 +175,27 @@ const DisplayCalculator: React.FC<DisplayCalculatorProps> = ({ onCalculate }) =>
     setHasCalculated(true)
   }
 
-  const handleAcceptAndContinue = () => {
+  const handleAddToQuote = () => {
     if (calculationResults) {
-      onCalculate(calculationResults)
+      const resultsWithNickname = {
+        ...calculationResults,
+        nickname: displayNickname || `Display ${Date.now()}`
+      }
+      onCalculate(resultsWithNickname)
+      
+      // Reset the form for adding another display
+      setWidth('')
+      setHeight('')
+      setDisplayNickname('')
+      setHasCalculated(false)
+      setCalculationResults(null)
     }
+  }
+
+  const handleContinue = () => {
+    // This will be handled by the parent component to move to next step
+    // We'll use a special flag to indicate this is a "continue" action
+    onCalculate({ ...calculationResults!, isContinue: true })
   }
 
   const handleTileChange = (tileId: string) => {
@@ -397,8 +417,8 @@ const DisplayCalculator: React.FC<DisplayCalculatorProps> = ({ onCalculate }) =>
               <div><strong>Display Size (Imperial):</strong> {metersToFeetInches(calculationResults.totalWidth)} × {metersToFeetInches(calculationResults.totalHeight)}</div>
               <div><strong>Total Wall Resolution:</strong> {Math.floor(calculationResults.totalWidth / (selectedTile.ledTile.physicalWidthMm / 1000)) * selectedTile.ledTile.pixelWidth} × {Math.floor(calculationResults.totalHeight / (selectedTile.ledTile.physicalHeightMm / 1000)) * selectedTile.ledTile.pixelHeight} pixels</div>
               <div><strong>Total Area:</strong> {calculationResults.totalArea.toFixed(2)} m²</div>
-                             <div><strong>Total Power:</strong> {calculationResults.totalPower.toFixed(0)}W</div>
-               <div><strong>Average Power (Total):</strong> {(calculationResults.totalTiles * selectedTile.ledTile.avgPowerW).toFixed(0)}W</div>
+              <div><strong>Total Power:</strong> {calculationResults.totalPower.toFixed(0)}W</div>
+              <div><strong>Average Power (Total):</strong> {(calculationResults.totalTiles * selectedTile.ledTile.avgPowerW).toFixed(0)}W</div>
                <div><strong>Maximum BTU/hr:</strong> {(calculationResults.totalTiles * selectedTile.ledTile.maxPowerW * 3.412141).toFixed(0)} BTU/hr</div>
                <div><strong>Average BTU/hr:</strong> {(calculationResults.totalTiles * selectedTile.ledTile.avgPowerW * 3.412141).toFixed(0)} BTU/hr</div>
               <div><strong>Processor:</strong> {calculationResults.recommendedProcessor}</div>
@@ -407,16 +427,43 @@ const DisplayCalculator: React.FC<DisplayCalculatorProps> = ({ onCalculate }) =>
           </div>
         )}
 
-        {/* Accept and Continue Button */}
-        {hasCalculated && (
-          <Button
-            onClick={handleAcceptAndContinue}
-            className="w-full bg-green-600 hover:bg-green-700 text-white"
-          >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Accept and Continue
-          </Button>
-        )}
+                 {/* Display Nickname Field */}
+         {hasCalculated && (
+           <div className="space-y-2">
+             <label className="block text-sm font-medium text-gray-300">
+               Display Nickname (Optional)
+             </label>
+             <Input
+               type="text"
+               value={displayNickname}
+               onChange={(e) => setDisplayNickname(e.target.value)}
+               placeholder="e.g., Main Stage Display, Side Wall, etc."
+               className="bg-gray-700 border-gray-600 text-gray-100"
+             />
+           </div>
+         )}
+
+         {/* Add to Quote Button */}
+         {hasCalculated && (
+           <Button
+             onClick={handleAddToQuote}
+             className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+           >
+             <Package className="w-4 h-4 mr-2" />
+             Add to Quote
+           </Button>
+         )}
+
+         {/* Continue Button */}
+         {hasCalculated && (
+           <Button
+             onClick={handleContinue}
+             className="w-full bg-green-600 hover:bg-green-700 text-white"
+           >
+             <ArrowRight className="w-4 h-4 mr-2" />
+             Continue to Next Step
+           </Button>
+         )}
 
         {/* Database Status */}
         <div className="flex items-center space-x-2 text-sm text-gray-400">

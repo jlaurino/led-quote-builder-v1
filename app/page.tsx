@@ -42,6 +42,7 @@ const QuoteBuilder: React.FC = () => {
   const [powerResults, setPowerResults] = useState<PowerCalculationResults | null>(null)
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([])
   const [nextItemId, setNextItemId] = useState(1)
+  const [globalMarkup, setGlobalMarkup] = useState(20)
 
   // Quote Builder Steps
   const quoteBuilderSteps: SidebarStep[] = [
@@ -160,13 +161,19 @@ const QuoteBuilder: React.FC = () => {
   }
 
   const handleDisplayCalculate = (results: DisplayCalculationResults) => {
+    // Check if this is a "continue" action
+    if (results.isContinue) {
+      handleNext()
+      return
+    }
+
     setDisplayResults(results)
     
     // If a tile was selected, automatically add it to the quote
     if (results.selectedTile) {
       const product = {
         id: results.selectedTile.id,
-        name: results.selectedTile.name,
+        name: results.selectedTile.name + (results.nickname ? ` (${results.nickname})` : ''),
         category: results.selectedTile.category,
         manufacturer: results.selectedTile.manufacturer,
         modelNumber: results.selectedTile.modelNumber,
@@ -179,7 +186,7 @@ const QuoteBuilder: React.FC = () => {
       handleAddProduct(product, results.totalTiles)
     }
     
-    handleNext()
+    // Don't automatically advance to next step - user can add more displays
   }
 
   const handlePowerCalculate = (results: PowerCalculationResults) => {
@@ -188,17 +195,30 @@ const QuoteBuilder: React.FC = () => {
   }
 
   const handleAddProduct = (product: any, quantity: number) => {
+    // Calculate sell price based on pricing method
+    let calculatedSellPrice = product.unitPrice || product.unitCost
+    
+    if (product.pricingMethod === 'global') {
+      // Use global markup percentage
+      calculatedSellPrice = product.unitCost * (1 + globalMarkup / 100)
+    } else if (product.pricingMethod === 'bespoke') {
+      // Use bespoke markup percentage
+      const bespokeMarkup = product.bespokeMarkup || 20
+      calculatedSellPrice = product.unitCost * (1 + bespokeMarkup / 100)
+    }
+    // For 'manual' method, use the existing unitPrice
+
     const newItem: QuoteItem = {
       id: nextItemId,
       name: product.name,
       category: product.category,
       manufacturer: product.manufacturer,
       quantity,
-      unitPrice: product.unitPrice || product.unitCost,
-      totalPrice: (product.unitPrice || product.unitCost) * quantity,
+      unitPrice: calculatedSellPrice,
+      totalPrice: calculatedSellPrice * quantity,
       unitCost: product.unitCost,
       buyPrice: product.unitCost || product.ledTile?.buyPrice,
-      sellPrice: product.unitPrice || product.ledTile?.sellPrice,
+      sellPrice: calculatedSellPrice,
     }
     setQuoteItems([...quoteItems, newItem])
     setNextItemId(nextItemId + 1)
@@ -258,20 +278,22 @@ const QuoteBuilder: React.FC = () => {
             initialData={customerInfo || undefined}
           />
         )
-      case 4:
-        return (
-          <QuoteSummary
-            items={quoteItems}
-            subtotal={subtotal}
-            markup={markup}
-            fees={fees}
-            total={total}
-            onRemoveItem={handleRemoveItem}
-            onUpdateQuantity={handleUpdateQuantity}
-            onExportQuote={handleExportQuote}
-            onExportBOM={handleExportBOM}
-          />
-        )
+               case 4:
+           return (
+             <QuoteSummary
+               items={quoteItems}
+               subtotal={subtotal}
+               markup={markup}
+               fees={fees}
+               total={total}
+               globalMarkup={globalMarkup}
+               onRemoveItem={handleRemoveItem}
+               onUpdateQuantity={handleUpdateQuantity}
+               onUpdateGlobalMarkup={setGlobalMarkup}
+               onExportQuote={handleExportQuote}
+               onExportBOM={handleExportBOM}
+             />
+           )
       case 5:
         return <ProductManager />
       default:
@@ -310,8 +332,8 @@ const QuoteBuilder: React.FC = () => {
         {/* Content Area */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="flex gap-6">
-            {/* Main Content */}
-            <div className="flex-1 max-w-4xl">
+                         {/* Main Content */}
+             <div className="flex-1 min-w-0">
               {/* Step Navigation */}
               <div className="flex items-center justify-between mb-6">
                 <Button
@@ -348,80 +370,19 @@ const QuoteBuilder: React.FC = () => {
                 {renderCurrentStep()}
               </div>
 
-              {/* Results Display */}
-              {(displayResults || powerResults) && (
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {displayResults && (
-                    <Card className="bg-gray-800 border-gray-700">
-                      <CardHeader>
-                        <CardTitle className="flex items-center space-x-2 text-gray-100">
-                          <Monitor className="w-5 h-5" />
-                          <span>Display Results</span>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Total Tiles:</span>
-                          <span className="text-gray-100">{displayResults.totalTiles}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Total Power:</span>
-                          <span className="text-gray-100">{displayResults.totalPower}W</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Recommended Processor:</span>
-                          <span className="text-gray-100">{displayResults.recommendedProcessor}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Estimated Cost:</span>
-                          <span className="text-gray-100">${displayResults.estimatedCost.toFixed(2)}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {powerResults && (
-                    <Card className="bg-gray-800 border-gray-700">
-                      <CardHeader>
-                        <CardTitle className="flex items-center space-x-2 text-gray-100">
-                          <Zap className="w-5 h-5" />
-                          <span>Power Results</span>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Total Power:</span>
-                          <span className="text-gray-100">{powerResults.totalPower}W</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Recommended Capacity:</span>
-                          <span className="text-gray-100">{powerResults.recommendedCapacity}W</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Phase:</span>
-                          <span className="text-gray-100">{powerResults.recommendedPhase}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Redundancy:</span>
-                          <span className="text-gray-100">{powerResults.redundancy ? 'Yes' : 'No'}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              )}
+              
             </div>
 
-            {/* Quote Tally Sidebar */}
-            {currentStep < 5 && (
-              <div className="w-80 flex-shrink-0">
-                <QuoteTally
-                  items={quoteItems}
-                  onRemoveItem={handleRemoveItem}
-                  onUpdateQuantity={handleUpdateQuantity}
-                />
-              </div>
-            )}
+                         {/* Quote Tally Sidebar */}
+             {currentStep < 5 && (
+               <div className="w-[448px] flex-shrink-0">
+                 <QuoteTally
+                   items={quoteItems}
+                   onRemoveItem={handleRemoveItem}
+                   onUpdateQuantity={handleUpdateQuantity}
+                 />
+               </div>
+             )}
           </div>
         </main>
       </div>

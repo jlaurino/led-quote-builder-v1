@@ -36,6 +36,8 @@ model Product {
   specs          Json?
   unitCost       Float
   unitPrice      Float?
+  pricingMethod  String?             // 'global', 'bespoke', 'manual'
+  bespokeMarkup  Float?              // Percentage for bespoke markup
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
   audio          AudioSpec?

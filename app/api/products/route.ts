@@ -65,6 +65,8 @@ export async function POST(request: NextRequest) {
       modelNumber, 
       unitCost, 
       unitPrice, 
+      pricingMethod,
+      bespokeMarkup,
       specs,
       ledTile,
       ledProcessor,
@@ -100,6 +102,8 @@ export async function POST(request: NextRequest) {
       modelNumber: modelNumber || null,
       unitCost: safeParseFloat(unitCost) || 0, // Default to 0 if not provided
       unitPrice: safeParseFloat(unitPrice),
+      pricingMethod: pricingMethod || null,
+      bespokeMarkup: safeParseFloat(bespokeMarkup),
       specs: specs || {},
       widthMm: safeParseFloat(otherFields.widthMm),
       heightMm: safeParseFloat(otherFields.heightMm),

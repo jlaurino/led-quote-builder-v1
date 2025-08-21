@@ -23,7 +23,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
       <div
         ref={ref}
         className={cn(
-          "w-80 bg-gray-800 border-r border-gray-700 p-6 space-y-4",
+          "w-[282px] bg-gray-800 border-r border-gray-700 p-6 space-y-4",
           className
         )}
         {...props}

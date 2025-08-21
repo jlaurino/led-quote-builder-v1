@@ -45,6 +45,9 @@ interface ProductFormData {
   subcategory: string
   unitCost: string
   unitPrice: string
+  // Pricing options
+  pricingMethod: 'global' | 'bespoke' | 'manual'
+  bespokeMarkup: string
   // LED Tile specific fields
   pixelPitchMm: string
   physicalWidthMm: string
@@ -78,6 +81,8 @@ const ProductManager: React.FC = () => {
     subcategory: '',
     unitCost: '',
     unitPrice: '',
+    pricingMethod: 'global',
+    bespokeMarkup: '20',
     pixelPitchMm: '',
     physicalWidthMm: '',
     physicalHeightMm: '',
@@ -128,6 +133,8 @@ const ProductManager: React.FC = () => {
       subcategory: formData.subcategory,
       unitCost: formData.unitCost, // Send as string, let API handle parsing
       unitPrice: formData.unitPrice, // Send as string, let API handle parsing
+      pricingMethod: formData.pricingMethod,
+      bespokeMarkup: formData.bespokeMarkup,
       specs: { description: formData.description },
       ...(formData.category === ProductCategory.LED_TILE && {
         ledTile: {
@@ -196,6 +203,8 @@ const ProductManager: React.FC = () => {
       subcategory: product.subcategory || '',
       unitCost: product.unitCost.toString(),
       unitPrice: (product.unitPrice || 0).toString(),
+      pricingMethod: 'manual', // Default to manual for existing products
+      bespokeMarkup: '20',
       pixelPitchMm: product.ledTile?.pixelPitchMm.toString() || '',
       physicalWidthMm: product.ledTile?.physicalWidthMm.toString() || '',
       physicalHeightMm: product.ledTile?.physicalHeightMm.toString() || '',
@@ -242,6 +251,8 @@ const ProductManager: React.FC = () => {
       subcategory: '',
       unitCost: '',
       unitPrice: '',
+      pricingMethod: 'global',
+      bespokeMarkup: '20',
       pixelPitchMm: '',
       physicalWidthMm: '',
       physicalHeightMm: '',
@@ -496,7 +507,7 @@ const ProductManager: React.FC = () => {
               </div>
 
               {/* Pricing */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Buy Price ($)</label>
                   <Input
@@ -509,18 +520,71 @@ const ProductManager: React.FC = () => {
                     className="bg-gray-700 border-gray-600 text-gray-100"
                   />
                 </div>
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Sell Price ($)</label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.sellPrice}
-                    onChange={(e) => updateFormData('sellPrice', e.target.value)}
-                    placeholder="0.00"
-                    required
-                    className="bg-gray-700 border-gray-600 text-gray-100"
-                  />
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Sell Price Method</label>
+                  <div className="space-y-3">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        value="global"
+                        checked={formData.pricingMethod === 'global'}
+                        onChange={(e) => updateFormData('pricingMethod', e.target.value)}
+                        className="text-blue-600"
+                      />
+                      <span className="text-gray-300">Use Global Hardware Markup (20%)</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        value="bespoke"
+                        checked={formData.pricingMethod === 'bespoke'}
+                        onChange={(e) => updateFormData('pricingMethod', e.target.value)}
+                        className="text-blue-600"
+                      />
+                      <span className="text-gray-300">Use Bespoke Percentage</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        value="manual"
+                        checked={formData.pricingMethod === 'manual'}
+                        onChange={(e) => updateFormData('pricingMethod', e.target.value)}
+                        className="text-blue-600"
+                      />
+                      <span className="text-gray-300">Manual Entry</span>
+                    </label>
+                  </div>
                 </div>
+
+                {formData.pricingMethod === 'bespoke' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Bespoke Markup Percentage (%)</label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={formData.bespokeMarkup}
+                      onChange={(e) => updateFormData('bespokeMarkup', e.target.value)}
+                      placeholder="20"
+                      className="bg-gray-700 border-gray-600 text-gray-100"
+                    />
+                  </div>
+                )}
+
+                {formData.pricingMethod === 'manual' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Sell Price ($)</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.sellPrice}
+                      onChange={(e) => updateFormData('sellPrice', e.target.value)}
+                      placeholder="0.00"
+                      required
+                      className="bg-gray-700 border-gray-600 text-gray-100"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* LED Tile Specific Fields */}

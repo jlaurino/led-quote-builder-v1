@@ -19,8 +19,10 @@ interface QuoteSummaryProps {
   markup: number
   fees: number
   total: number
+  globalMarkup: number
   onRemoveItem: (id: number) => void
   onUpdateQuantity: (id: number, quantity: number) => void
+  onUpdateGlobalMarkup: (markup: number) => void
   onExportQuote: () => void
   onExportBOM: () => void
 }
@@ -31,8 +33,10 @@ const QuoteSummary: React.FC<QuoteSummaryProps> = ({
   markup,
   fees,
   total,
+  globalMarkup,
   onRemoveItem,
   onUpdateQuantity,
+  onUpdateGlobalMarkup,
   onExportQuote,
   onExportBOM,
 }) => {
@@ -123,6 +127,22 @@ const QuoteSummary: React.FC<QuoteSummaryProps> = ({
               </div>
             ))
           )}
+        </div>
+
+        {/* Global Markup Setting */}
+        <div className="border-t border-gray-600 pt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-300">
+              Global Hardware Markup (%)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={globalMarkup}
+              onChange={(e) => onUpdateGlobalMarkup(parseFloat(e.target.value) || 20)}
+              className="w-20 px-2 py-1 text-sm bg-gray-600 border border-gray-500 rounded text-gray-100"
+            />
+          </div>
         </div>
 
         {/* Totals */}
