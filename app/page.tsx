@@ -8,6 +8,7 @@ import ProductSelector from '@/components/quote-builder/product-selector'
 import QuoteSummary from '@/components/quote-builder/quote-summary'
 import CustomerInfo from '@/components/quote-builder/customer-info'
 import ProductManager from '@/components/product-management/product-manager'
+import QuoteTally from '@/components/quote-builder/quote-tally'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Monitor, Zap, Package, FileText, User, CheckCircle, ArrowRight, ArrowLeft, Database } from 'lucide-react'
@@ -20,6 +21,9 @@ interface QuoteItem {
   quantity: number
   unitPrice: number
   totalPrice: number
+  unitCost?: number
+  buyPrice?: number
+  sellPrice?: number
 }
 
 interface CustomerInfoData {
@@ -192,6 +196,9 @@ const QuoteBuilder: React.FC = () => {
       quantity,
       unitPrice: product.unitPrice || product.unitCost,
       totalPrice: (product.unitPrice || product.unitCost) * quantity,
+      unitCost: product.unitCost,
+      buyPrice: product.unitCost || product.ledTile?.buyPrice,
+      sellPrice: product.unitPrice || product.ledTile?.sellPrice,
     }
     setQuoteItems([...quoteItems, newItem])
     setNextItemId(nextItemId + 1)
@@ -302,103 +309,117 @@ const QuoteBuilder: React.FC = () => {
 
         {/* Content Area */}
         <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-4xl mx-auto">
-            {/* Step Navigation */}
-            <div className="flex items-center justify-between mb-6">
-              <Button
-                onClick={handlePrevious}
-                disabled={currentStep === 0}
-                variant="outline"
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Previous
-              </Button>
-              
-              <div className="text-center">
-                <h2 className="text-xl font-semibold text-gray-100">
-                  {currentStep < 5 ? quoteBuilderSteps[currentStep].title : productDatabaseSteps[0].title}
-                </h2>
-                <p className="text-gray-400">
-                  {currentStep < 5 ? quoteBuilderSteps[currentStep].description : productDatabaseSteps[0].description}
-                </p>
+          <div className="flex gap-6">
+            {/* Main Content */}
+            <div className="flex-1 max-w-4xl">
+              {/* Step Navigation */}
+              <div className="flex items-center justify-between mb-6">
+                <Button
+                  onClick={handlePrevious}
+                  disabled={currentStep === 0}
+                  variant="outline"
+                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Previous
+                </Button>
+                
+                <div className="text-center">
+                  <h2 className="text-xl font-semibold text-gray-100">
+                    {currentStep < 5 ? quoteBuilderSteps[currentStep].title : productDatabaseSteps[0].title}
+                  </h2>
+                  <p className="text-gray-400">
+                    {currentStep < 5 ? quoteBuilderSteps[currentStep].description : productDatabaseSteps[0].description}
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleNext}
+                  disabled={currentStep === 5}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Next
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
               </div>
 
-              <Button
-                onClick={handleNext}
-                disabled={currentStep === 5}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Next
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              {/* Step Content */}
+              <div className="space-y-6">
+                {renderCurrentStep()}
+              </div>
+
+              {/* Results Display */}
+              {(displayResults || powerResults) && (
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {displayResults && (
+                    <Card className="bg-gray-800 border-gray-700">
+                      <CardHeader>
+                        <CardTitle className="flex items-center space-x-2 text-gray-100">
+                          <Monitor className="w-5 h-5" />
+                          <span>Display Results</span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Total Tiles:</span>
+                          <span className="text-gray-100">{displayResults.totalTiles}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Total Power:</span>
+                          <span className="text-gray-100">{displayResults.totalPower}W</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Recommended Processor:</span>
+                          <span className="text-gray-100">{displayResults.recommendedProcessor}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Estimated Cost:</span>
+                          <span className="text-gray-100">${displayResults.estimatedCost.toFixed(2)}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {powerResults && (
+                    <Card className="bg-gray-800 border-gray-700">
+                      <CardHeader>
+                        <CardTitle className="flex items-center space-x-2 text-gray-100">
+                          <Zap className="w-5 h-5" />
+                          <span>Power Results</span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Total Power:</span>
+                          <span className="text-gray-100">{powerResults.totalPower}W</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Recommended Capacity:</span>
+                          <span className="text-gray-100">{powerResults.recommendedCapacity}W</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Phase:</span>
+                          <span className="text-gray-100">{powerResults.recommendedPhase}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Redundancy:</span>
+                          <span className="text-gray-100">{powerResults.redundancy ? 'Yes' : 'No'}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Step Content */}
-            <div className="space-y-6">
-              {renderCurrentStep()}
-            </div>
-
-            {/* Results Display */}
-            {(displayResults || powerResults) && (
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                {displayResults && (
-                  <Card className="bg-gray-800 border-gray-700">
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2 text-gray-100">
-                        <Monitor className="w-5 h-5" />
-                        <span>Display Results</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Total Tiles:</span>
-                        <span className="text-gray-100">{displayResults.totalTiles}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Total Power:</span>
-                        <span className="text-gray-100">{displayResults.totalPower}W</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Recommended Processor:</span>
-                        <span className="text-gray-100">{displayResults.recommendedProcessor}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Estimated Cost:</span>
-                        <span className="text-gray-100">${displayResults.estimatedCost.toFixed(2)}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {powerResults && (
-                  <Card className="bg-gray-800 border-gray-700">
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2 text-gray-100">
-                        <Zap className="w-5 h-5" />
-                        <span>Power Results</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Total Power:</span>
-                        <span className="text-gray-100">{powerResults.totalPower}W</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Recommended Capacity:</span>
-                        <span className="text-gray-100">{powerResults.recommendedCapacity}W</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Phase:</span>
-                        <span className="text-gray-100">{powerResults.recommendedPhase}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Redundancy:</span>
-                        <span className="text-gray-100">{powerResults.redundancy ? 'Yes' : 'No'}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+            {/* Quote Tally Sidebar */}
+            {currentStep < 5 && (
+              <div className="w-80 flex-shrink-0">
+                <QuoteTally
+                  items={quoteItems}
+                  onRemoveItem={handleRemoveItem}
+                  onUpdateQuantity={handleUpdateQuantity}
+                />
               </div>
             )}
           </div>

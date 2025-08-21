@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
-import { Calculator, Monitor, Ruler, Database } from 'lucide-react'
-import { ProductCategory } from '@prisma/client'
+import { Calculator, Monitor, Database, CheckCircle } from 'lucide-react'
 
 interface DisplayCalculatorProps {
   onCalculate: (results: DisplayCalculationResults) => void
@@ -21,6 +20,11 @@ export interface DisplayCalculationResults {
   recommendedProcessor: string
   estimatedCost: number
   selectedTile: any
+  inputMethod: 'feet' | 'meters' | 'tiles'
+  inputValues: {
+    width: string
+    height: string
+  }
 }
 
 interface LEDTile {
@@ -49,12 +53,14 @@ interface LEDTile {
 }
 
 const DisplayCalculator: React.FC<DisplayCalculatorProps> = ({ onCalculate }) => {
+  const [inputMethod, setInputMethod] = useState<'feet' | 'meters' | 'tiles'>('meters')
   const [width, setWidth] = useState('')
   const [height, setHeight] = useState('')
   const [selectedTile, setSelectedTile] = useState<LEDTile | null>(null)
   const [ledTiles, setLedTiles] = useState<LEDTile[]>([])
   const [loading, setLoading] = useState(true)
-  const [calculationMode, setCalculationMode] = useState<'manual' | 'database'>('database')
+  const [calculationResults, setCalculationResults] = useState<DisplayCalculationResults | null>(null)
+  const [hasCalculated, setHasCalculated] = useState(false)
 
   useEffect(() => {
     fetchLEDTiles()
@@ -82,43 +88,60 @@ const DisplayCalculator: React.FC<DisplayCalculatorProps> = ({ onCalculate }) =>
   }
 
   const handleCalculate = () => {
-    const widthNum = parseFloat(width)
-    const heightNum = parseFloat(height)
-
-    if (!widthNum || !heightNum) {
+    if (!width || !height) {
       alert('Please fill in display dimensions')
       return
     }
 
-    if (calculationMode === 'database' && !selectedTile) {
+    if (!selectedTile) {
       alert('Please select an LED tile from the database')
       return
     }
 
-    let tileWidth: number, tileHeight: number, tilePower: number, tileCost: number
+    // Convert input values to meters for calculation
+    let widthInMeters: number, heightInMeters: number
 
-    if (calculationMode === 'database' && selectedTile) {
-      // Use database tile data
-      tileWidth = selectedTile.ledTile.physicalWidthMm / 1000 // Convert to meters
-      tileHeight = selectedTile.ledTile.physicalHeightMm / 1000
-      tilePower = selectedTile.ledTile.avgPowerW
-      tileCost = selectedTile.unitPrice || selectedTile.ledTile.sellPrice
-    } else {
-      // Manual mode (fallback)
-      alert('Please select database mode and choose an LED tile')
-      return
+    switch (inputMethod) {
+      case 'feet':
+        widthInMeters = parseFloat(width) * 0.3048
+        heightInMeters = parseFloat(height) * 0.3048
+        break
+      case 'meters':
+        widthInMeters = parseFloat(width)
+        heightInMeters = parseFloat(height)
+        break
+      case 'tiles':
+        const tileWidthInMeters = selectedTile.ledTile.physicalWidthMm / 1000
+        const tileHeightInMeters = selectedTile.ledTile.physicalHeightMm / 1000
+        widthInMeters = parseFloat(width) * tileWidthInMeters
+        heightInMeters = parseFloat(height) * tileHeightInMeters
+        break
+      default:
+        widthInMeters = parseFloat(width)
+        heightInMeters = parseFloat(height)
     }
 
-    const tilesX = Math.ceil(widthNum / tileWidth)
-    const tilesY = Math.ceil(heightNum / tileHeight)
+    // Calculate using database tile data
+    const tileWidth = selectedTile.ledTile.physicalWidthMm / 1000 // Convert to meters
+    const tileHeight = selectedTile.ledTile.physicalHeightMm / 1000
+    const tilePower = selectedTile.ledTile.avgPowerW
+    const tileCost = selectedTile.unitPrice || selectedTile.ledTile.sellPrice
+
+    // Calculate tiles needed (less than or equal to requested size)
+    const tilesX = Math.floor(widthInMeters / tileWidth)
+    const tilesY = Math.floor(heightInMeters / tileHeight)
     const totalTiles = tilesX * tilesY
-    const totalArea = widthNum * heightNum
+
+    // Calculate actual display dimensions based on tiles used
+    const actualWidth = tilesX * tileWidth
+    const actualHeight = tilesY * tileHeight
+    const totalArea = actualWidth * actualHeight
     const totalPower = totalTiles * tilePower
     const estimatedCost = totalTiles * tileCost
 
     // Enhanced processor recommendation based on actual tile specs
-    const totalPixels = (widthNum * 1000 / selectedTile.ledTile.pixelPitchMm) * 
-                       (heightNum * 1000 / selectedTile.ledTile.pixelPitchMm)
+    const totalPixels = (tilesX * selectedTile.ledTile.pixelWidth) * 
+                       (tilesY * selectedTile.ledTile.pixelHeight)
     
     let recommendedProcessor = 'Basic LED Processor'
     if (totalPixels > 2000000) {
@@ -131,21 +154,85 @@ const DisplayCalculator: React.FC<DisplayCalculatorProps> = ({ onCalculate }) =>
 
     const results: DisplayCalculationResults = {
       totalTiles,
-      totalWidth: widthNum,
-      totalHeight: heightNum,
+      totalWidth: actualWidth,
+      totalHeight: actualHeight,
       totalArea,
       totalPower,
       recommendedProcessor,
       estimatedCost,
       selectedTile,
+      inputMethod,
+      inputValues: {
+        width,
+        height
+      }
     }
 
-    onCalculate(results)
+    setCalculationResults(results)
+    setHasCalculated(true)
+  }
+
+  const handleAcceptAndContinue = () => {
+    if (calculationResults) {
+      onCalculate(calculationResults)
+    }
   }
 
   const handleTileChange = (tileId: string) => {
     const tile = ledTiles.find(t => t.id.toString() === tileId)
     setSelectedTile(tile || null)
+    // Reset calculation when tile changes
+    setHasCalculated(false)
+    setCalculationResults(null)
+  }
+
+  const handleInputChange = () => {
+    // Reset calculation when inputs change
+    setHasCalculated(false)
+    setCalculationResults(null)
+  }
+
+  const getInputLabels = () => {
+    switch (inputMethod) {
+      case 'feet':
+        return { widthLabel: 'Display Width (ft)', heightLabel: 'Display Height (ft)' }
+      case 'meters':
+        return { widthLabel: 'Display Width (m)', heightLabel: 'Display Height (m)' }
+      case 'tiles':
+        return { widthLabel: 'Number of Tiles (Width)', heightLabel: 'Number of Tiles (Height)' }
+      default:
+        return { widthLabel: 'Display Width', heightLabel: 'Display Height' }
+    }
+  }
+
+  const getInputPlaceholders = () => {
+    switch (inputMethod) {
+      case 'feet':
+        return { widthPlaceholder: 'e.g., 16.4', heightPlaceholder: 'e.g., 9.8' }
+      case 'meters':
+        return { widthPlaceholder: 'e.g., 5.0', heightPlaceholder: 'e.g., 3.0' }
+      case 'tiles':
+        return { widthPlaceholder: 'e.g., 10', heightPlaceholder: 'e.g., 6' }
+      default:
+        return { widthPlaceholder: 'Enter width', heightPlaceholder: 'Enter height' }
+    }
+  }
+
+  const metersToFeetInches = (meters: number): string => {
+    const totalInches = meters * 39.3701 // Convert meters to inches
+    const feet = Math.floor(totalInches / 12)
+    const inches = totalInches % 12
+    
+    // Round to nearest 1/2 inch
+    const roundedInches = Math.round(inches * 2) / 2
+    
+    if (roundedInches === 0) {
+      return `${feet}'`
+    } else if (roundedInches === 12) {
+      return `${feet + 1}'`
+    } else {
+      return `${feet}' ${roundedInches}"`
+    }
   }
 
   if (loading) {
@@ -158,6 +245,9 @@ const DisplayCalculator: React.FC<DisplayCalculatorProps> = ({ onCalculate }) =>
     )
   }
 
+  const { widthLabel, heightLabel } = getInputLabels()
+  const { widthPlaceholder, heightPlaceholder } = getInputPlaceholders()
+
   return (
     <Card className="bg-gray-800 border-gray-700">
       <CardHeader>
@@ -167,114 +257,166 @@ const DisplayCalculator: React.FC<DisplayCalculatorProps> = ({ onCalculate }) =>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Calculation Mode Selection */}
-        <div className="flex space-x-4">
-          <label className="flex items-center space-x-2">
-            <input
-              type="radio"
-              value="database"
-              checked={calculationMode === 'database'}
-              onChange={(e) => setCalculationMode(e.target.value as 'manual' | 'database')}
-              className="text-blue-600"
-            />
-            <span className="text-gray-300">Use Database Tiles</span>
+        {/* Input Method Selection */}
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Input Method
           </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="radio"
-              value="manual"
-              checked={calculationMode === 'manual'}
-              onChange={(e) => setCalculationMode(e.target.value as 'manual' | 'database')}
-              className="text-blue-600"
-            />
-            <span className="text-gray-300">Manual Entry</span>
-          </label>
+          <div className="flex space-x-6">
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                value="feet"
+                checked={inputMethod === 'feet'}
+                onChange={(e) => {
+                  setInputMethod(e.target.value as 'feet' | 'meters' | 'tiles')
+                  handleInputChange()
+                }}
+                className="text-blue-600"
+              />
+              <span className="text-gray-300">Feet</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                value="meters"
+                checked={inputMethod === 'meters'}
+                onChange={(e) => {
+                  setInputMethod(e.target.value as 'feet' | 'meters' | 'tiles')
+                  handleInputChange()
+                }}
+                className="text-blue-600"
+              />
+              <span className="text-gray-300">Meters</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                value="tiles"
+                checked={inputMethod === 'tiles'}
+                onChange={(e) => {
+                  setInputMethod(e.target.value as 'feet' | 'meters' | 'tiles')
+                  handleInputChange()
+                }}
+                className="text-blue-600"
+              />
+              <span className="text-gray-300">Number of Tiles</span>
+            </label>
+          </div>
         </div>
 
         {/* Display Dimensions */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Display Width (m)
+              {widthLabel}
             </label>
             <Input
               type="number"
               value={width}
-              onChange={(e) => setWidth(e.target.value)}
-              placeholder="e.g., 5.0"
+              onChange={(e) => {
+                setWidth(e.target.value)
+                handleInputChange()
+              }}
+              placeholder={widthPlaceholder}
               className="bg-gray-700 border-gray-600 text-gray-100"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Display Height (m)
+              {heightLabel}
             </label>
             <Input
               type="number"
               value={height}
-              onChange={(e) => setHeight(e.target.value)}
-              placeholder="e.g., 3.0"
+              onChange={(e) => {
+                setHeight(e.target.value)
+                handleInputChange()
+              }}
+              placeholder={heightPlaceholder}
               className="bg-gray-700 border-gray-600 text-gray-100"
             />
           </div>
         </div>
 
         {/* LED Tile Selection */}
-        {calculationMode === 'database' && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Select LED Tile
-              </label>
-              <Select
-                value={selectedTile?.id.toString() || ''}
-                onChange={(e) => handleTileChange(e.target.value)}
-              >
-                <option value="">Choose an LED tile...</option>
-                {ledTiles.map((tile) => (
-                  <option key={tile.id} value={tile.id.toString()}>
-                    {tile.manufacturer} {tile.name} - P{tile.ledTile.pixelPitchMm}mm
-                  </option>
-                ))}
-              </Select>
-            </div>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Select LED Tile
+            </label>
+            <Select
+              value={selectedTile?.id.toString() || ''}
+              onChange={(e) => handleTileChange(e.target.value)}
+            >
+              <option value="">Choose an LED tile...</option>
+              {ledTiles.map((tile) => (
+                <option key={tile.id} value={tile.id.toString()}>
+                  {tile.manufacturer} {tile.name} - P{tile.ledTile.pixelPitchMm}mm
+                </option>
+              ))}
+            </Select>
+          </div>
 
-            {/* Selected Tile Details */}
-            {selectedTile && (
-              <div className="p-4 bg-gray-700 rounded-lg space-y-2">
-                <h4 className="font-semibold text-gray-200">Selected Tile Details:</h4>
-                <div className="grid grid-cols-2 gap-2 text-sm text-gray-300">
-                  <div><strong>Manufacturer:</strong> {selectedTile.manufacturer}</div>
-                  <div><strong>Model:</strong> {selectedTile.modelNumber}</div>
-                  <div><strong>Pixel Pitch:</strong> {selectedTile.ledTile.pixelPitchMm}mm</div>
-                  <div><strong>Physical Size:</strong> {selectedTile.ledTile.physicalWidthMm}×{selectedTile.ledTile.physicalHeightMm}mm</div>
-                  <div><strong>Resolution:</strong> {selectedTile.ledTile.pixelWidth}×{selectedTile.ledTile.pixelHeight}</div>
-                  <div><strong>Brightness:</strong> {selectedTile.ledTile.brightnessNits} nits</div>
-                  <div><strong>Power:</strong> {selectedTile.ledTile.avgPowerW}W avg</div>
-                  <div><strong>Price:</strong> ${selectedTile.unitPrice || selectedTile.ledTile.sellPrice}</div>
-                </div>
+          {/* Selected Tile Details */}
+          {selectedTile && (
+            <div className="p-4 bg-gray-700 rounded-lg space-y-2">
+              <h4 className="font-semibold text-gray-200">Selected Tile Details:</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm text-gray-300">
+                <div><strong>Manufacturer:</strong> {selectedTile.manufacturer}</div>
+                <div><strong>Model:</strong> {selectedTile.modelNumber}</div>
+                <div><strong>Pixel Pitch:</strong> {selectedTile.ledTile.pixelPitchMm}mm</div>
+                <div><strong>Physical Size:</strong> {selectedTile.ledTile.physicalWidthMm}×{selectedTile.ledTile.physicalHeightMm}mm</div>
+                <div><strong>Resolution:</strong> {selectedTile.ledTile.pixelWidth}×{selectedTile.ledTile.pixelHeight}</div>
+                <div><strong>Brightness:</strong> {selectedTile.ledTile.brightnessNits} nits</div>
+                <div><strong>Power:</strong> {selectedTile.ledTile.avgPowerW}W avg</div>
+                <div><strong>Price:</strong> ${selectedTile.unitPrice || selectedTile.ledTile.sellPrice}</div>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
-        {/* Manual Entry Fields (hidden when using database) */}
-        {calculationMode === 'manual' && (
-          <div className="space-y-4 p-4 bg-gray-700 rounded-lg">
-            <p className="text-gray-300 text-sm">
-              Manual entry mode is disabled. Please use database tiles for accurate calculations.
-            </p>
-          </div>
-        )}
-
+        {/* Calculate Button */}
         <Button
           onClick={handleCalculate}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-          disabled={!width || !height || (calculationMode === 'database' && !selectedTile)}
+          disabled={!width || !height || !selectedTile}
         >
           <Calculator className="w-4 h-4 mr-2" />
-          Calculate Display Requirements
+          Calculate
         </Button>
+
+        {/* Display Results */}
+        {hasCalculated && calculationResults && selectedTile && (
+          <div className="p-4 bg-gray-700 rounded-lg space-y-3">
+            <h4 className="font-semibold text-gray-200">Display Results:</h4>
+            <div className="grid grid-cols-2 gap-3 text-sm text-gray-300">
+              <div><strong>Total Tiles:</strong> {calculationResults.totalTiles}</div>
+              <div><strong>Array Size:</strong> {Math.floor(calculationResults.totalWidth / (selectedTile.ledTile.physicalWidthMm / 1000))} × {Math.floor(calculationResults.totalHeight / (selectedTile.ledTile.physicalHeightMm / 1000))} tiles</div>
+              <div><strong>Display Size (Metric):</strong> {calculationResults.totalWidth.toFixed(2)}m × {calculationResults.totalHeight.toFixed(2)}m</div>
+              <div><strong>Display Size (Imperial):</strong> {metersToFeetInches(calculationResults.totalWidth)} × {metersToFeetInches(calculationResults.totalHeight)}</div>
+              <div><strong>Total Wall Resolution:</strong> {Math.floor(calculationResults.totalWidth / (selectedTile.ledTile.physicalWidthMm / 1000)) * selectedTile.ledTile.pixelWidth} × {Math.floor(calculationResults.totalHeight / (selectedTile.ledTile.physicalHeightMm / 1000)) * selectedTile.ledTile.pixelHeight} pixels</div>
+              <div><strong>Total Area:</strong> {calculationResults.totalArea.toFixed(2)} m²</div>
+                             <div><strong>Total Power:</strong> {calculationResults.totalPower.toFixed(0)}W</div>
+               <div><strong>Average Power (Total):</strong> {(calculationResults.totalTiles * selectedTile.ledTile.avgPowerW).toFixed(0)}W</div>
+               <div><strong>Maximum BTU/hr:</strong> {(calculationResults.totalTiles * selectedTile.ledTile.maxPowerW * 3.412141).toFixed(0)} BTU/hr</div>
+               <div><strong>Average BTU/hr:</strong> {(calculationResults.totalTiles * selectedTile.ledTile.avgPowerW * 3.412141).toFixed(0)} BTU/hr</div>
+              <div><strong>Processor:</strong> {calculationResults.recommendedProcessor}</div>
+              <div><strong>Estimated Cost:</strong> ${calculationResults.estimatedCost.toFixed(2)}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Accept and Continue Button */}
+        {hasCalculated && (
+          <Button
+            onClick={handleAcceptAndContinue}
+            className="w-full bg-green-600 hover:bg-green-700 text-white"
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Accept and Continue
+          </Button>
+        )}
 
         {/* Database Status */}
         <div className="flex items-center space-x-2 text-sm text-gray-400">

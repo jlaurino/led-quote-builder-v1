@@ -59,10 +59,28 @@ export async function PUT(
 
     // Update related specifications if provided
     if (ledTile) {
+      // Convert string values to numbers for LED tile specs
+      const convertedLedTile = {
+        pixelPitchMm: parseFloat(ledTile.pixelPitchMm),
+        physicalWidthMm: parseFloat(ledTile.physicalWidthMm),
+        physicalHeightMm: parseFloat(ledTile.physicalHeightMm),
+        pixelWidth: parseInt(ledTile.pixelWidth),
+        pixelHeight: parseInt(ledTile.pixelHeight),
+        weightKg: parseFloat(ledTile.weightKg),
+        maxPowerW: parseFloat(ledTile.maxPowerW),
+        avgPowerW: parseFloat(ledTile.avgPowerW),
+        receivingCardType: ledTile.receivingCardType,
+        brightnessNits: parseFloat(ledTile.brightnessNits),
+        refreshRateHz: parseInt(ledTile.refreshRateHz),
+        scanRate: ledTile.scanRate ? parseInt(ledTile.scanRate) : null,
+        buyPrice: parseFloat(ledTile.buyPrice),
+        sellPrice: parseFloat(ledTile.sellPrice),
+      }
+
       await prisma.lEDTileSpec.upsert({
         where: { productId },
-        update: ledTile,
-        create: { productId, ...ledTile },
+        update: convertedLedTile,
+        create: { productId, ...convertedLedTile },
       })
     }
 
